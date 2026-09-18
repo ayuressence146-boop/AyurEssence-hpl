@@ -25,23 +25,28 @@ class AssessmentService:
 
     @staticmethod
     def _verify_patient_access(db: Session, patient_id: str, current_user: Profile) -> Patient:
+        patient_id_str = str(patient_id)
         try:
-            uuid.UUID(patient_id)
+            uuid.UUID(patient_id_str)
         except ValueError:
             raise BadRequestException(f"Invalid patient UUID format: {patient_id}")
 
-        patient = db.query(Patient).filter(Patient.id == patient_id).first()
+        patient = db.query(Patient).filter(Patient.id == patient_id_str).first()
         if not patient:
             raise NotFoundException(f"Patient with ID '{patient_id}' not found")
+
+        current_user_id_str = str(current_user.id)
+        patient_creator_str = str(patient.created_by) if patient.created_by else None
+        patient_id_db_str = str(patient.id)
 
         if current_user.role == "doctor":
             return patient
         elif current_user.role == "student":
-            if patient.created_by != current_user.id:
+            if patient_creator_str != current_user_id_str:
                 raise UnauthorizedException("Student does not have permission for this patient")
             return patient
         elif current_user.role == "patient":
-            if patient.id != current_user.id and patient.created_by != current_user.id:
+            if patient_id_db_str != current_user_id_str and patient_creator_str != current_user_id_str:
                 raise UnauthorizedException("Patient can only access their own assessment data")
             return patient
 
@@ -52,16 +57,20 @@ class AssessmentService:
         if current_user.role not in ["doctor", "student"]:
             raise UnauthorizedException("Only doctors and students can initiate assessments")
 
+        patient_id_str = str(req.patient_id)
+        questionnaire_id_str = str(req.questionnaire_id)
+        methodology_id_str = str(req.methodology_id)
+
         # Validate Patient
-        patient = AssessmentService._verify_patient_access(db, req.patient_id, current_user)
+        patient = AssessmentService._verify_patient_access(db, patient_id_str, current_user)
 
         # Validate Questionnaire
         try:
-            uuid.UUID(req.questionnaire_id)
+            uuid.UUID(questionnaire_id_str)
         except ValueError:
             raise BadRequestException(f"Invalid questionnaire UUID format: {req.questionnaire_id}")
 
-        questionnaire = db.query(Questionnaire).filter(Questionnaire.id == req.questionnaire_id).first()
+        questionnaire = db.query(Questionnaire).filter(Questionnaire.id == questionnaire_id_str).first()
         if not questionnaire:
             raise NotFoundException(f"Questionnaire with ID '{req.questionnaire_id}' not found")
         if not questionnaire.is_active:
@@ -69,11 +78,11 @@ class AssessmentService:
 
         # Validate Methodology
         try:
-            uuid.UUID(req.methodology_id)
+            uuid.UUID(methodology_id_str)
         except ValueError:
             raise BadRequestException(f"Invalid methodology UUID format: {req.methodology_id}")
 
-        methodology = db.query(Methodology).filter(Methodology.id == req.methodology_id).first()
+        methodology = db.query(Methodology).filter(Methodology.id == methodology_id_str).first()
         if not methodology:
             raise NotFoundException(f"Methodology with ID '{req.methodology_id}' not found")
         if not methodology.is_active:
@@ -81,10 +90,10 @@ class AssessmentService:
 
         assessment = Assessment(
             id=str(uuid.uuid4()),
-            patient_id=patient.id,
-            conducted_by=current_user.id,
-            questionnaire_id=questionnaire.id,
-            methodology_id=methodology.id,
+            patient_id=str(patient.id),
+            conducted_by=str(current_user.id),
+            questionnaire_id=str(questionnaire.id),
+            methodology_id=str(methodology.id),
             status="draft",
             started_at=datetime.now(timezone.utc)
         )
@@ -95,17 +104,18 @@ class AssessmentService:
 
     @staticmethod
     def get_assessment_by_id(db: Session, assessment_id: str, current_user: Profile) -> Assessment:
+        assessment_id_str = str(assessment_id)
         try:
-            uuid.UUID(assessment_id)
+            uuid.UUID(assessment_id_str)
         except ValueError:
             raise BadRequestException(f"Invalid assessment UUID format: {assessment_id}")
 
-        assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
+        assessment = db.query(Assessment).filter(Assessment.id == assessment_id_str).first()
         if not assessment:
             raise NotFoundException(f"Assessment with ID '{assessment_id}' not found")
 
         # Verify access via patient ownership
-        AssessmentService._verify_patient_access(db, assessment.patient_id, current_user)
+        AssessmentService._verify_patient_access(db, str(assessment.patient_id), current_user)
         return assessment
 
     @staticmethod
@@ -128,15 +138,15 @@ class AssessmentService:
         if target_status == "submitted":
             # Check required questions
             required_questions = db.query(Question).filter(
-                Question.questionnaire_id == assessment.questionnaire_id,
+                Question.questionnaire_id == str(assessment.questionnaire_id),
                 Question.is_required == True
             ).all()
 
             answered_question_ids = {
-                r.question_id for r in db.query(Response).filter(Response.assessment_id == assessment.id).all()
+                str(r.question_id) for r in db.query(Response).filter(Response.assessment_id == str(assessment.id)).all()
             }
 
-            missing = [q for q in required_questions if q.id not in answered_question_ids]
+            missing = [q for q in required_questions if str(q.id) not in answered_question_ids]
             if missing:
                 missing_texts = ", ".join([f"'{q.question_text}'" for q in missing[:3]])
                 raise BadRequestException(
@@ -157,42 +167,46 @@ class AssessmentService:
 
     @staticmethod
     def add_response(db: Session, assessment_id: str, req: ResponseCreateRequest, current_user: Profile) -> Response:
-        assessment = AssessmentService.get_assessment_by_id(db, assessment_id, current_user)
+        assessment_id_str = str(assessment_id)
+        question_id_str = str(req.question_id)
+        selected_option_id_str = str(req.selected_option_id)
+
+        assessment = AssessmentService.get_assessment_by_id(db, assessment_id_str, current_user)
 
         if assessment.status == "finalized":
             raise ConflictException("Assessment is FINALIZED and read-only. Responses cannot be modified.")
 
         # Verify question exists & belongs to assessment's questionnaire
-        question = db.query(Question).filter(Question.id == req.question_id).first()
+        question = db.query(Question).filter(Question.id == question_id_str).first()
         if not question:
             raise NotFoundException(f"Question with ID '{req.question_id}' not found")
-        if question.questionnaire_id != assessment.questionnaire_id:
+        if str(question.questionnaire_id) != str(assessment.questionnaire_id):
             raise BadRequestException("Question does not belong to this assessment's questionnaire")
 
         # Verify selected option belongs to question
-        option = db.query(QuestionOption).filter(QuestionOption.id == req.selected_option_id).first()
+        option = db.query(QuestionOption).filter(QuestionOption.id == selected_option_id_str).first()
         if not option:
             raise NotFoundException(f"Option with ID '{req.selected_option_id}' not found")
-        if option.question_id != question.id:
+        if str(option.question_id) != str(question.id):
             raise BadRequestException("Selected option does not belong to the specified question")
 
         # Check existing response for upsert
         existing_resp = db.query(Response).filter(
-            Response.assessment_id == assessment_id,
-            Response.question_id == req.question_id
+            Response.assessment_id == assessment_id_str,
+            Response.question_id == question_id_str
         ).first()
 
         if existing_resp:
-            existing_resp.selected_option_id = req.selected_option_id
+            existing_resp.selected_option_id = selected_option_id_str
             existing_resp.text_answer = req.text_answer
             existing_resp.updated_at = datetime.now(timezone.utc)
             resp = existing_resp
         else:
             resp = Response(
                 id=str(uuid.uuid4()),
-                assessment_id=assessment_id,
-                question_id=req.question_id,
-                selected_option_id=req.selected_option_id,
+                assessment_id=assessment_id_str,
+                question_id=question_id_str,
+                selected_option_id=selected_option_id_str,
                 text_answer=req.text_answer
             )
             db.add(resp)
@@ -210,15 +224,16 @@ class AssessmentService:
         if current_user.role not in ["doctor", "student"]:
             raise UnauthorizedException("Only doctors and students can add practitioner observations")
 
-        assessment = AssessmentService.get_assessment_by_id(db, assessment_id, current_user)
+        assessment_id_str = str(assessment_id)
+        assessment = AssessmentService.get_assessment_by_id(db, assessment_id_str, current_user)
 
         if assessment.status == "finalized":
             raise ConflictException("Assessment is FINALIZED and read-only. Observations cannot be added.")
 
         obs = Observation(
             id=str(uuid.uuid4()),
-            assessment_id=assessment_id,
-            created_by=current_user.id,
+            assessment_id=assessment_id_str,
+            created_by=str(current_user.id),
             notes=req.notes
         )
         db.add(obs)
@@ -231,13 +246,14 @@ class AssessmentService:
         if current_user.role not in ["doctor", "student"]:
             raise UnauthorizedException("Only doctors and students can calculate Prakriti results")
 
-        assessment = AssessmentService.get_assessment_by_id(db, assessment_id, current_user)
+        assessment_id_str = str(assessment_id)
+        assessment = AssessmentService.get_assessment_by_id(db, assessment_id_str, current_user)
 
         if assessment.status == "finalized":
             raise ConflictException("Assessment is FINALIZED and read-only. Re-calculation is prohibited.")
 
         # Retrieve all responses with option scores
-        responses = db.query(Response).filter(Response.assessment_id == assessment_id).all()
+        responses = db.query(Response).filter(Response.assessment_id == assessment_id_str).all()
         if not responses:
             raise BadRequestException("Cannot calculate Prakriti: No responses submitted for this assessment")
 
@@ -253,11 +269,11 @@ class AssessmentService:
         computed = PrakritiCalculationEngine.compute_prakriti(option_scores)
 
         # Delete old result if recalculating in non-finalized state
-        db.query(AssessmentResult).filter(AssessmentResult.assessment_id == assessment_id).delete()
+        db.query(AssessmentResult).filter(AssessmentResult.assessment_id == assessment_id_str).delete()
 
         result = AssessmentResult(
             id=str(uuid.uuid4()),
-            assessment_id=assessment_id,
+            assessment_id=assessment_id_str,
             vata_percentage=computed["vata_percentage"],
             pitta_percentage=computed["pitta_percentage"],
             kapha_percentage=computed["kapha_percentage"],
@@ -272,9 +288,10 @@ class AssessmentService:
 
     @staticmethod
     def get_assessment_result(db: Session, assessment_id: str, current_user: Profile) -> AssessmentResult:
-        assessment = AssessmentService.get_assessment_by_id(db, assessment_id, current_user)
+        assessment_id_str = str(assessment_id)
+        assessment = AssessmentService.get_assessment_by_id(db, assessment_id_str, current_user)
 
-        result = db.query(AssessmentResult).filter(AssessmentResult.assessment_id == assessment_id).first()
+        result = db.query(AssessmentResult).filter(AssessmentResult.assessment_id == assessment_id_str).first()
         if not result:
             raise NotFoundException(f"Calculation result for assessment '{assessment_id}' does not exist yet")
         return result
