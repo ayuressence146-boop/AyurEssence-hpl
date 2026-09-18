@@ -1,0 +1,696 @@
+{
+	"info": {
+		"_postman_id": "ayurbase-backend-evaluation2-collection",
+		"name": "AyurEssence Backend - Postman Collection",
+		"description": "Complete Postman collection for testing the AyurEssence FastAPI backend (HPL 2026 Evaluation 2). Includes automatic JWT token capture and variables for seamless end-to-end testing.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8000/api",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "patientId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "assessmentId",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "01 - Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/health",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "02 - Auth - Register Doctor",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"if (jsonData.access_token) {",
+							"    pm.collectionVariables.set('token', jsonData.access_token);",
+							"    console.log('Saved JWT Token: ' + jsonData.access_token);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"postman_doctor@ayur.com\",\n  \"password\": \"@doctor123\",\n  \"full_name\": \"Dr. Postman Doctor\",\n  \"role\": \"doctor\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/register",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "03 - Auth - Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"if (jsonData.access_token) {",
+							"    pm.collectionVariables.set('token', jsonData.access_token);",
+							"    console.log('Saved JWT Token: ' + jsonData.access_token);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"postman_doctor@ayur.com\",\n  \"password\": \"@doctor123\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "04 - Auth - Get Current Profile (Me)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/auth/me",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"me"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "05 - Patients - Create Patient",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"if (jsonData.id) {",
+							"    pm.collectionVariables.set('patientId', jsonData.id);",
+							"    console.log('Saved Patient ID: ' + jsonData.id);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"full_name\": \"Postman Test Patient\",\n  \"date_of_birth\": \"1998-04-12\",\n  \"gender\": \"Male\",\n  \"phone\": \"+91-9876543210\",\n  \"email\": \"postman.patient@example.com\",\n  \"address\": \"456 Postman Way, Tech Park\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/patients",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"patients"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "06 - Patients - List Patients",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/patients",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"patients"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "07 - Patients - Get Patient by ID",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/patients/{{patientId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"patients",
+						"{{patientId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "08 - Questionnaires - List Questionnaires",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/questionnaires",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"questionnaires"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "09 - Questionnaires - Get Questionnaire Detail",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/questionnaires/33333333-3333-3333-3333-333333333333",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"questionnaires",
+						"33333333-3333-3333-3333-333333333333"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "10 - Assessments - Create Draft Assessment",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"if (jsonData.id) {",
+							"    pm.collectionVariables.set('assessmentId', jsonData.id);",
+							"    console.log('Saved Assessment ID: ' + jsonData.id);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"patient_id\": \"{{patientId}}\",\n  \"questionnaire_id\": \"33333333-3333-3333-3333-333333333333\",\n  \"methodology_id\": \"11111111-1111-1111-1111-111111111111\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/assessments",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"assessments"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "11 - Assessments - Submit Response 1 (Vata)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"question_id\": \"44444444-4444-4444-4444-444444440001\",\n  \"selected_option_id\": \"55555555-5555-5555-5555-555555550101\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/assessments/{{assessmentId}}/responses",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"assessments",
+						"{{assessmentId}}",
+						"responses"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "12 - Assessments - Submit Response 2 (Pitta)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"question_id\": \"44444444-4444-4444-4444-444444440002\",\n  \"selected_option_id\": \"55555555-5555-5555-5555-555555550202\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/assessments/{{assessmentId}}/responses",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"assessments",
+						"{{assessmentId}}",
+						"responses"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "13 - Assessments - Add Practitioner Observation",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"notes\": \"Patient presents with dual Vata-Pitta characteristics.\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/assessments/{{assessmentId}}/observations",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"assessments",
+						"{{assessmentId}}",
+						"observations"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "14 - Assessments - Calculate Prakriti Result",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/assessments/{{assessmentId}}/calculate",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"assessments",
+						"{{assessmentId}}",
+						"calculate"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "15 - Assessments - Get Result",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/assessments/{{assessmentId}}/result",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"assessments",
+						"{{assessmentId}}",
+						"result"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "16 - Assessments - Advance Status to SUBMITTED",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"status\": \"submitted\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/assessments/{{assessmentId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"assessments",
+						"{{assessmentId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "17 - Assessments - Advance Status to REVIEWED",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"status\": \"reviewed\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/assessments/{{assessmentId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"assessments",
+						"{{assessmentId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "18 - Assessments - Finalize Assessment (Doctor)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"status\": \"finalized\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/assessments/{{assessmentId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"assessments",
+						"{{assessmentId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "19 - Assessments - Test Read-Only Immutability (Returns 409 Conflict)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"question_id\": \"44444444-4444-4444-4444-444444440001\",\n  \"selected_option_id\": \"55555555-5555-5555-5555-555555550102\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/assessments/{{assessmentId}}/responses",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"assessments",
+						"{{assessmentId}}",
+						"responses"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
