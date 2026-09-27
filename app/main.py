@@ -52,6 +52,13 @@ app.include_router(reminders_router)
 app.include_router(reports_router)
 app.include_router(educational_router)
 
+from fastapi.staticfiles import StaticFiles
+import os
+
+frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
+if os.path.exists(frontend_path):
+    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+
 @app.get("/health", tags=["Health Check"])
 def health_check():
     """System health check endpoint."""
