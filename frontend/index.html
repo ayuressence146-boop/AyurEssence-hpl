@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AyurEssence — Clinical Ayurvedic Diagnostic Engine (v4.2 CCRAS)</title>
+    <meta name="description" content="AyurEssence: CCRAS-PRKRITI-001-v1.0 Traceable Engine for Charaka Samhita Vimanasthana Ch. 8 Prakriti Assessment.">
+    
+    <!-- Google Fonts: Source Serif 4, Noto Serif, Hanken Grotesk, Manrope, JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="ccras-body">
+
+    <div class="ccras-app">
+        
+        <!-- 1. FIXED LEFT SIDEBAR (72px) -->
+        <aside class="ccras-sidebar" id="ccrasSidebar">
+            <div class="sidebar-top">
+                <div class="brand-emblem" title="AyurEssence Clinical Prakriti Engine v4.2">
+                    <i class="fa-solid fa-om emblem-icon"></i>
+                </div>
+                <div class="version-badge-vertical" title="CCRAS Protocol Specifier">v4.2</div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <button class="menu-btn active" data-screen="screen-1" onclick="switchScreen('screen-1')" title="Patient Directory & Dashboard">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span class="active-dot"></span>
+                </button>
+                <button class="menu-btn" data-screen="screen-2" onclick="switchScreen('screen-2')" title="Deterministic Scoring & Breakdown (SCREEN_2_PRAKRITI_BREAKDOWN)">
+                    <i class="fa-solid fa-calculator"></i>
+                </button>
+                <button class="menu-btn" data-screen="screen-3" onclick="switchScreen('screen-3')" title="Classical Questionnaire Engine">
+                    <i class="fa-solid fa-clipboard-question"></i>
+                </button>
+                <button class="menu-btn" data-screen="screen-4" onclick="switchScreen('screen-4')" title="Astavidha Clinical Pariksha">
+                    <i class="fa-solid fa-stethoscope"></i>
+                </button>
+                <button class="menu-btn" data-screen="screen-5" onclick="switchScreen('screen-5')" title="Finalized Report & Immutability Ledger">
+                    <i class="fa-solid fa-file-contract"></i>
+                </button>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <button class="menu-btn" title="Charaka Samhitā References" onclick="openShlokaModal()">
+                    <i class="fa-solid fa-book-journal-whills"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN LAYOUT WRAPPER -->
+        <div class="ccras-main-wrapper">
+            
+            <!-- TOP NAVIGATION BAR -->
+            <header class="ccras-topnav">
+                <div class="topnav-left">
+                    <div class="engine-title-block">
+                        <span class="engine-code" id="screenCodeTag">SCREEN_1_PATIENT_DASHBOARD</span>
+                        <h1 class="screen-title" id="screenTitleHeading">Patient Directory & Clinical Dashboard</h1>
+                    </div>
+                </div>
+
+                <div class="topnav-center">
+                    <!-- Global Search -->
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="globalSearchInput" placeholder="Search patient name, Lakshana, or Assessment ID (AE-2026)..." onkeyup="handleGlobalSearch(this.value)">
+                    </div>
+
+                    <!-- AI Assists Pipeline Breadcrumb Badge -->
+                    <div class="pipeline-breadcrumb" title="Human-in-the-Loop Protocol">
+                        <span class="step-chip done"><i class="fa-solid fa-microchip"></i> AI Assists</span>
+                        <i class="fa-solid fa-chevron-right step-arrow"></i>
+                        <span class="step-chip done"><i class="fa-solid fa-calculator"></i> Rules Calculate</span>
+                        <i class="fa-solid fa-chevron-right step-arrow"></i>
+                        <span class="step-chip active"><i class="fa-solid fa-user-doctor"></i> Practitioner Reviews</span>
+                        <i class="fa-solid fa-chevron-right step-arrow"></i>
+                        <span class="step-chip pending"><i class="fa-solid fa-file-signature"></i> Doctor Finalizes</span>
+                    </div>
+                </div>
+
+                <div class="topnav-right">
+                    <!-- Role Switcher -->
+                    <div class="role-selector-box">
+                        <span class="role-label"><i class="fa-solid fa-user-shield"></i> Role:</span>
+                        <select id="roleSelector" class="role-dropdown" onchange="switchRole(this.value)">
+                            <option value="doctor">Dr. Ananya Rao, MD (Doctor)</option>
+                            <option value="student">Rahul Verma (Ayurveda Intern)</option>
+                        </select>
+                    </div>
+
+                    <!-- Clinician Profile Badge -->
+                    <div class="clinician-profile">
+                        <div class="clinician-avatar">
+                            <i class="fa-solid fa-user-tie"></i>
+                        </div>
+                        <div class="clinician-meta">
+                            <span class="clinician-name" id="clinicianNameText">Dr. Ananya Rao, MD (Ayu)</span>
+                            <span class="clinician-reg" id="clinicianRegText">Registration ID: AY-8842</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- CANVAS / SCROLLABLE CONTENT SURFACE -->
+            <main class="ccras-content">
+
+                <!-- ================= SCREEN 1: PATIENT DIRECTORY & DASHBOARD ================= -->
+                <section id="screen-1" class="screen-view active">
+                    <div class="view-header">
+                        <div>
+                            <h2 class="view-title">Clinical Patient Directory & Assessment Management</h2>
+                            <p class="view-sub">Overview of registered patients, clinical assessments, and state machine lifecycles.</p>
+                        </div>
+                        <div class="header-btns">
+                            <button class="btn btn-secondary" onclick="openNewPatientModal()">
+                                <i class="fa-solid fa-user-plus"></i> Register New Patient
+                            </button>
+                            <button class="btn btn-primary" onclick="openNewAssessmentModal()">
+                                <i class="fa-solid fa-play"></i> Initiate Assessment
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Summary Stat Cards Grid -->
+                    <div class="summary-stats-grid">
+                        <div class="summary-card vata-border">
+                            <div class="s-icon"><i class="fa-solid fa-hospital-user"></i></div>
+                            <div class="s-details">
+                                <span class="s-val" id="statTotalPatients">14</span>
+                                <span class="s-lbl">Total Registered Patients</span>
+                            </div>
+                        </div>
+
+                        <div class="summary-card pitta-border">
+                            <div class="s-icon"><i class="fa-solid fa-spinner"></i></div>
+                            <div class="s-details">
+                                <span class="s-val" id="statActiveAssessments">6</span>
+                                <span class="s-lbl">Active Clinical Assessments</span>
+                            </div>
+                        </div>
+
+                        <div class="summary-card kapha-border">
+                            <div class="s-icon"><i class="fa-solid fa-shield-check"></i></div>
+                            <div class="s-details">
+                                <span class="s-val" id="statFinalizedReports">8</span>
+                                <span class="s-lbl">Finalized Immutable Reports</span>
+                            </div>
+                        </div>
+
+                        <div class="summary-card teak-border">
+                            <div class="s-icon"><i class="fa-solid fa-dna"></i></div>
+                            <div class="s-details">
+                                <span class="s-val">Vāta-Pitta</span>
+                                <span class="s-lbl">Dominant Population Type</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Patient Directory Table Card -->
+                    <div class="ledger-card">
+                        <div class="ledger-header">
+                            <div class="ledger-title-group">
+                                <h3><i class="fa-solid fa-users-medical"></i> Registered Patient Directory</h3>
+                                <span class="ledger-sub">Filter by clinical demographics or medical history</span>
+                            </div>
+                            <div class="filter-controls">
+                                <select id="genderFilter" class="filter-select" onchange="filterPatientsTable()">
+                                    <option value="">All Genders</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table class="ccras-table">
+                                <thead>
+                                    <tr>
+                                        <th>Patient ID</th>
+                                        <th>Full Name</th>
+                                        <th>Age / Gender</th>
+                                        <th>Contact Phone</th>
+                                        <th>Baseline Medical History</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="patientsTableBody">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Recent Assessments Lifecycle Table -->
+                    <div class="ledger-card">
+                        <div class="ledger-header">
+                            <div class="ledger-title-group">
+                                <h3><i class="fa-solid fa-diagram-project"></i> Assessment State Machine Lifecycle Registry</h3>
+                                <span class="ledger-sub">Track active state transitions (DRAFT → IN_PROGRESS → SUBMITTED → REVIEWED → FINALIZED)</span>
+                            </div>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table class="ccras-table">
+                                <thead>
+                                    <tr>
+                                        <th>Assessment ID</th>
+                                        <th>Patient Name</th>
+                                        <th>Practitioner / Intern</th>
+                                        <th>State Lifecycle</th>
+                                        <th>Dominant Prakriti</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentAssessmentsBody">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+
+                <!-- ================= SCREEN 2: DETERMINISTIC PRAKRITI BREAKDOWN ================= -->
+                <section id="screen-2" class="screen-view">
+                    <!-- 1. CLINICAL TRUST ARCHITECTURE BANNER -->
+                    <div class="trust-banner-card">
+                        <div class="trust-banner-header">
+                            <div class="status-pill">
+                                <span class="pulse-dot"></span>
+                                <span class="status-code">PRKRITI-001-v1.0 Traceable Engine</span>
+                                <span class="status-sep">•</span>
+                                <span class="status-desc">CALCULATED & VERIFIED • PENDING DOCTOR SIGN-OFF</span>
+                            </div>
+
+                            <div class="patient-context-badge">
+                                <div class="patient-id-tag"><i class="fa-solid fa-id-card"></i> Assessment ID: <strong id="activeAsmIdText">AE-2026-00142</strong></div>
+                                <div class="patient-name-tag"><i class="fa-solid fa-user-large"></i> Patient: <strong id="activePatNameText">Rajesh Sharma (M/42)</strong></div>
+                            </div>
+                        </div>
+
+                        <div class="trust-guarantee-box">
+                            <div class="guarantee-icon">
+                                <i class="fa-solid fa-shield-heart"></i>
+                            </div>
+                            <div class="guarantee-text">
+                                <strong>Clinical Trust Guarantee: 100% Deterministic, mathematically transparent scoring.</strong>
+                                <p>No black-box neural networks modulating biological constitutional ratios. Scoring is derived strictly via weighted Lakshana occurrences under Charaka Samhitā Vimānasthāna Chapter 8 (Ślokas 96–100) specifications.</p>
+                            </div>
+                            <div class="guarantee-badge">
+                                <i class="fa-solid fa-circle-check"></i> Zero Black-Box
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. CONSTITUTIONAL RADIAL GAUGE TRIAD (3 CARDS) -->
+                    <div class="dosha-triad-grid">
+                        
+                        <!-- VĀTA PRAKRITI CARD -->
+                        <div class="dosha-card vata-card">
+                            <div class="dosha-card-header">
+                                <div class="dosha-title-group">
+                                    <span class="dosha-rank-tag vata">#1 Dominant</span>
+                                    <h3 class="dosha-name">Vāta Prakriti</h3>
+                                    <span class="dosha-sub">Primary Factor (Air + Ether)</span>
+                                </div>
+                                <div class="dosha-score-badge vata">
+                                    <span class="pts-val" id="vataPtsVal">48.0</span>
+                                    <span class="pts-denom">/ 114.2 pts</span>
+                                </div>
+                            </div>
+
+                            <div class="radial-gauge-container">
+                                <svg class="radial-svg" viewBox="0 0 160 160">
+                                    <circle class="gauge-bg" cx="80" cy="80" r="65"></circle>
+                                    <circle class="gauge-fill vata-fill" id="vataGaugeCircle" cx="80" cy="80" r="65" style="stroke-dasharray: 408.4; stroke-dashoffset: 236.87;"></circle>
+                                </svg>
+                                <div class="gauge-center-content">
+                                    <span class="gauge-percentage vata-text" id="vataPercentDisp">42.0%</span>
+                                    <span class="gauge-label">Vāta Ratio</span>
+                                </div>
+                            </div>
+
+                            <div class="gunas-container">
+                                <span class="guna-heading">Dominant Sharira Gunas:</span>
+                                <div class="guna-chips">
+                                    <span class="guna-chip vata">Chala (Mobile)</span>
+                                    <span class="guna-chip vata">Ruksha (Dry)</span>
+                                    <span class="guna-chip vata">Laghu (Light)</span>
+                                    <span class="guna-chip vata">Vishama (Irregular)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PITTA PRAKRITI CARD -->
+                        <div class="dosha-card pitta-card">
+                            <div class="dosha-card-header">
+                                <div class="dosha-title-group">
+                                    <span class="dosha-rank-tag pitta">#2 Co-Factor</span>
+                                    <h3 class="dosha-name">Pitta Prakriti</h3>
+                                    <span class="dosha-sub">Secondary Factor (Fire + Water)</span>
+                                </div>
+                                <div class="dosha-score-badge pitta">
+                                    <span class="pts-val" id="pittaPtsVal">38.8</span>
+                                    <span class="pts-denom">/ 114.2 pts</span>
+                                </div>
+                            </div>
+
+                            <div class="radial-gauge-container">
+                                <svg class="radial-svg" viewBox="0 0 160 160">
+                                    <circle class="gauge-bg" cx="80" cy="80" r="65"></circle>
+                                    <circle class="gauge-fill pitta-fill" id="pittaGaugeCircle" cx="80" cy="80" r="65" style="stroke-dasharray: 408.4; stroke-dashoffset: 269.54;"></circle>
+                                </svg>
+                                <div class="gauge-center-content">
+                                    <span class="gauge-percentage pitta-text" id="pittaPercentDisp">34.0%</span>
+                                    <span class="gauge-label">Pitta Ratio</span>
+                                </div>
+                            </div>
+
+                            <div class="gunas-container">
+                                <span class="guna-heading">Dominant Sharira Gunas:</span>
+                                <div class="guna-chips">
+                                    <span class="guna-chip pitta">Tikshna (Sharp)</span>
+                                    <span class="guna-chip pitta">Ushna (Hot)</span>
+                                    <span class="guna-chip pitta">Laghu (Light)</span>
+                                    <span class="guna-chip pitta">Sara (Flowing)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KAPHA PRAKRITI CARD -->
+                        <div class="dosha-card kapha-card">
+                            <div class="dosha-card-header">
+                                <div class="dosha-title-group">
+                                    <span class="dosha-rank-tag kapha">#3 Subordinate</span>
+                                    <h3 class="dosha-name">Kapha Prakriti</h3>
+                                    <span class="dosha-sub">Baseline Factor (Water + Earth)</span>
+                                </div>
+                                <div class="dosha-score-badge kapha">
+                                    <span class="pts-val" id="kaphaPtsVal">27.4</span>
+                                    <span class="pts-denom">/ 114.2 pts</span>
+                                </div>
+                            </div>
+
+                            <div class="radial-gauge-container">
+                                <svg class="radial-svg" viewBox="0 0 160 160">
+                                    <circle class="gauge-bg" cx="80" cy="80" r="65"></circle>
+                                    <circle class="gauge-fill kapha-fill" id="kaphaGaugeCircle" cx="80" cy="80" r="65" style="stroke-dasharray: 408.4; stroke-dashoffset: 310.38;"></circle>
+                                </svg>
+                                <div class="gauge-center-content">
+                                    <span class="gauge-percentage kapha-text" id="kaphaPercentDisp">24.0%</span>
+                                    <span class="gauge-label">Kapha Ratio</span>
+                                </div>
+                            </div>
+
+                            <div class="gunas-container">
+                                <span class="guna-heading">Dominant Sharira Gunas:</span>
+                                <div class="guna-chips">
+                                    <span class="guna-chip kapha">Guru (Heavy)</span>
+                                    <span class="guna-chip kapha">Sheeta (Cold)</span>
+                                    <span class="guna-chip kapha">Manda (Slow)</span>
+                                    <span class="guna-chip kapha">Sthira (Stable)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- 3. CONSTITUTIONAL VERDICT BANNER -->
+                    <div class="verdict-banner-card">
+                        <div class="verdict-main-row">
+                            <div class="verdict-title-block">
+                                <span class="verdict-eyebrow">FINAL ALGORITHMIC CLASSIFICATION VERDICT</span>
+                                <h2 class="verdict-heading">Dominant Constitution: <span id="verdictPrakritiText">Vāta-Pitta Prakriti</span> (Dvandvaja)</h2>
+                            </div>
+                            <div class="verdict-badges-group">
+                                <span class="v-badge dual-type"><i class="fa-solid fa-code-branch"></i> Constitutional Dual Type II</span>
+                                <span class="v-badge stability-high"><i class="fa-solid fa-chart-line-up"></i> Stability Index: High (0.91)</span>
+                            </div>
+                        </div>
+
+                        <!-- Tri-Dosha Proportion Bar -->
+                        <div class="proportion-bar-wrapper">
+                            <div class="proportion-bar">
+                                <div class="seg vata-seg" id="vataSegBar" style="width: 42.0%;" title="Vāta 42.0%">
+                                    <span class="seg-label" id="vataSegText">Vāta 42%</span>
+                                </div>
+                                <div class="seg pitta-seg" id="pittaSegBar" style="width: 34.0%;" title="Pitta 34.0%">
+                                    <span class="seg-label" id="pittaSegText">Pitta 34%</span>
+                                </div>
+                                <div class="seg kapha-seg" id="kaphaSegBar" style="width: 24.0%;" title="Kapha 24.0%">
+                                    <span class="seg-label" id="kaphaSegText">Kapha 24%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. EXPLAINABILITY & LINEAGE AUDIT MATRIX (2 COLUMNS) -->
+                    <div class="audit-matrix-grid">
+                        
+                        <!-- LEFT COLUMN: MATHEMATICAL TRACEABILITY -->
+                        <div class="audit-card">
+                            <div class="audit-card-header">
+                                <h3><i class="fa-solid fa-square-root-variable"></i> Mathematical Traceability & Exact Fraction Formulas</h3>
+                                <span class="calc-badge">Exact Math</span>
+                            </div>
+
+                            <div class="formula-display-list">
+                                <div class="formula-row vata">
+                                    <span class="form-var">Vāta Ratio (\(\text{V}_{\%}\)):</span>
+                                    <code class="form-math" id="vataMathForm">\text{Vata \%} = \frac{48.0\text{ pts}}{114.2\text{ total pts}} \times 100 = 42.03\% \approx \mathbf{42.0\%}</code>
+                                </div>
+
+                                <div class="formula-row pitta">
+                                    <span class="form-var">Pitta Ratio (\(\text{P}_{\%}\)):</span>
+                                    <code class="form-math" id="pittaMathForm">\text{Pitta \%} = \frac{38.8\text{ pts}}{114.2\text{ total pts}} \times 100 = 33.97\% \approx \mathbf{34.0\%}</code>
+                                </div>
+
+                                <div class="formula-row kapha">
+                                    <span class="form-var">Kapha Ratio (\(\text{K}_{\%}\)):</span>
+                                    <code class="form-math" id="kaphaMathForm">\text{Kapha \%} = \frac{27.4\text{ pts}}{114.2\text{ total pts}} \times 100 = 23.99\% \approx \mathbf{24.0\%}</code>
+                                </div>
+                            </div>
+
+                            <div class="zero-blackbox-callout">
+                                <i class="fa-solid fa-shield-virus"></i>
+                                <div class="callout-content">
+                                    <strong>Deterministic Guarantee Statement:</strong>
+                                    <p>Every score point is backed by discrete binary or weighted observation tokens. No hidden layer weights or non-reproducible parameters are present in this calculation.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT COLUMN: CLASSICAL LINEAGE & RULE AUDIT -->
+                        <div class="audit-card">
+                            <div class="audit-card-header">
+                                <h3><i class="fa-solid fa-stamp"></i> Classical Lineage & Rule Audit Ledger</h3>
+                                <span class="calc-badge verified">Verified Hash</span>
+                            </div>
+
+                            <div class="audit-details-list">
+                                <div class="audit-item">
+                                    <span class="audit-label">Classical Canonical Standard:</span>
+                                    <span class="audit-value serif-val">Charaka Samhitā Vimānasthāna 8.96–100 (Rogabhishagjitīya)</span>
+                                </div>
+
+                                <div class="audit-item">
+                                    <span class="audit-label">Algorithmic Engine Spec:</span>
+                                    <span class="audit-value">CCRAS Engine Specifier: <code>CCRAS-PRKRITI-001-v1.0</code></span>
+                                </div>
+
+                                <div class="audit-item full-width">
+                                    <span class="audit-label">SHA-256 Rule Integrity Hash:</span>
+                                    <code class="hash-code" id="ruleHashVal">7f83b16520b22a00b69e4f2081f9b360f972b22ecf6916a4904b</code>
+                                </div>
+
+                                <div class="audit-item">
+                                    <span class="audit-label">Execution Timestamp:</span>
+                                    <span class="audit-value">2026-09-26 00:39:19 IST (UTC+05:30)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- 5. LAKSHANA MATRIX LEDGER (TABLE) -->
+                    <div class="ledger-card">
+                        <div class="ledger-header">
+                            <div class="ledger-title-group">
+                                <h3><i class="fa-solid fa-rectangle-list"></i> Lakshana Matrix Ledger</h3>
+                                <span class="ledger-sub">5 Primary Classical Diagnostic Domains — Charaka Vimānasthāna 8.96-100</span>
+                            </div>
+                            <div class="ledger-actions">
+                                <button class="btn btn-sm btn-secondary" onclick="exportLedgerCSV()">
+                                    <i class="fa-solid fa-file-csv"></i> Export CSV
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table class="ccras-table">
+                                <thead>
+                                    <tr>
+                                        <th>Criteria Domain</th>
+                                        <th>Lakshana Category</th>
+                                        <th>Physical & Clinical Observations</th>
+                                        <th>Points Tally per Dosha</th>
+                                        <th>Charaka Vimana Śloka Citation</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>1. Body Structure & Joints</strong></td>
+                                        <td>Anatomical Frame (Sharira Sthanika)</td>
+                                        <td>Lean body structure, prominent joints, dry skin, light weight frame.</td>
+                                        <td>
+                                            <span class="dosha-pts vata">V: 12.0</span>
+                                            <span class="dosha-pts pitta">P: 4.0</span>
+                                            <span class="dosha-pts kapha">K: 2.0</span>
+                                        </td>
+                                        <td><span class="sloka-tag">Vimāna 8.98 / Vāta</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>2. Digestive Fire & Agni</strong></td>
+                                        <td>Physiological Function (Koshtha & Agni)</td>
+                                        <td>Tikshnagni (sharp hunger) paired with Vishamagni (irregular bowel evacuations).</td>
+                                        <td>
+                                            <span class="dosha-pts vata">V: 10.0</span>
+                                            <span class="dosha-pts pitta">P: 14.0</span>
+                                            <span class="dosha-pts kapha">K: 1.4</span>
+                                        </td>
+                                        <td><span class="sloka-tag">Vimāna 8.97 / Pitta</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>3. Skin, Complexion & Heat</strong></td>
+                                        <td>Thermal & Tactile (Sparsha & Chhaya)</td>
+                                        <td>Warm body temperature, tendency to sweat under exertion, reddish skin tone.</td>
+                                        <td>
+                                            <span class="dosha-pts vata">V: 6.0</span>
+                                            <span class="dosha-pts pitta">P: 12.8</span>
+                                            <span class="dosha-pts kapha">K: 4.0</span>
+                                        </td>
+                                        <td><span class="sloka-tag">Vimāna 8.97 / Pitta</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>4. Sleep & Mental Activity</strong></td>
+                                        <td>Psychological & Manasa Gunas</td>
+                                        <td>Light interrupted sleep, quick learning rate with quick forgetting, high mobility.</td>
+                                        <td>
+                                            <span class="dosha-pts vata">V: 14.0</span>
+                                            <span class="dosha-pts pitta">P: 4.0</span>
+                                            <span class="dosha-pts kapha">K: 6.0</span>
+                                        </td>
+                                        <td><span class="sloka-tag">Vimāna 8.98 / Vāta</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>5. Joint Movements & Voice</strong></td>
+                                        <td>Motor & Acoustic Characteristics</td>
+                                        <td>Cracking sound in joints (Sandhi Sphutana), clear quick speech.</td>
+                                        <td>
+                                            <span class="dosha-pts vata">V: 6.0</span>
+                                            <span class="dosha-pts pitta">P: 4.0</span>
+                                            <span class="dosha-pts kapha">K: 14.0</span>
+                                        </td>
+                                        <td><span class="sloka-tag">Vimāna 8.96 / Kapha</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+
+                <!-- ================= SCREEN 3: CLASSICAL QUESTIONNAIRE INTERFACE ================= -->
+                <section id="screen-3" class="screen-view">
+                    <div class="view-header">
+                        <div>
+                            <h2 class="view-title">Charaka Samhitā Classical Prakriti Questionnaire</h2>
+                            <p class="view-sub">Administer 6 standardized diagnostic domain questions with live real-time score weighting.</p>
+                        </div>
+                    </div>
+
+                    <!-- Active Assessment Context Bar -->
+                    <div class="context-bar-card">
+                        <div class="ctx-item"><span class="ctx-lbl">Active Patient:</span> <strong id="qPatName">Rajesh Sharma (M/42)</strong></div>
+                        <div class="ctx-item"><span class="ctx-lbl">Assessment ID:</span> <strong id="qAsmId">AE-2026-00142</strong></div>
+                        <div class="ctx-item"><span class="ctx-lbl">State Lifecycle:</span> <span class="badge badge-in_progress" id="qStatusBadge">IN_PROGRESS</span></div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="progress-container">
+                        <div class="progress-labels">
+                            <span id="qCountText">Question 6 of 6 Answered</span>
+                            <span id="qPercentText">100% Complete</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="qProgressFill" style="width: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Questionnaire Cards List -->
+                    <div class="questionnaire-list" id="questionnaireListContainer">
+                        <!-- Populated via JS -->
+                    </div>
+
+                    <div class="form-actions-bar">
+                        <button class="btn btn-secondary" onclick="switchScreen('screen-1')"><i class="fa-solid fa-arrow-left"></i> Patient List</button>
+                        <button class="btn btn-primary" onclick="switchScreen('screen-4')">Proceed to Clinical Pariksha <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                </section>
+
+
+                <!-- ================= SCREEN 4: ASTAVIDHA CLINICAL PARIKSHA ================= -->
+                <section id="screen-4" class="screen-view">
+                    <div class="view-header">
+                        <div>
+                            <h2 class="view-title">Astavidha & Dashavidha Clinical Pariksha</h2>
+                            <p class="view-sub">Record physical examination parameters (Nadi, Jivha, Sparsha, Drik) and practitioner notes.</p>
+                        </div>
+                    </div>
+
+                    <div class="ledger-card">
+                        <h3 class="card-title-heading"><i class="fa-solid fa-microscope"></i> Clinical Examination Protocols</h3>
+                        
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label for="parikshaNadi"><i class="fa-solid fa-heart-pulse"></i> Nadi Pariksha (Pulse Rate & Motion)</label>
+                                <select id="parikshaNadi" class="form-control">
+                                    <option value="vata">Sarpagati (Serpentine / Rapid - Vata)</option>
+                                    <option value="pitta" selected>Mundukagati (Frog-like / Bouncing - Pitta)</option>
+                                    <option value="kapha">Hamsagati (Swan-like / Slow - Kapha)</option>
+                                    <option value="vata_pitta">Vata-Pitta Combined Motion</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="parikshaJivha"><i class="fa-solid fa-language"></i> Jivha Pariksha (Tongue Observation)</label>
+                                <select id="parikshaJivha" class="form-control">
+                                    <option value="vata">Dry, cracked, dark coating (Vata)</option>
+                                    <option value="pitta" selected>Reddish tone, yellow coating, inflamed papillae (Pitta)</option>
+                                    <option value="kapha">Moist, thick white slimy coating (Kapha)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="parikshaSparsha"><i class="fa-solid fa-hand-holding-medical"></i> Sparsha (Palpation & Temperature)</label>
+                                <select id="parikshaSparsha" class="form-control">
+                                    <option value="vata">Cold, rough, dry skin surface</option>
+                                    <option value="pitta" selected>Warm/hot skin, sweating tendency</option>
+                                    <option value="kapha">Cool, smooth, soft, moist skin</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="parikshaDrik"><i class="fa-solid fa-eye"></i> Drik Pariksha (Eye & Vision Traits)</label>
+                                <select id="parikshaDrik" class="form-control">
+                                    <option value="vata">Small, dry, unsteady, dark eyes</option>
+                                    <option value="pitta" selected>Medium, sharp, reddish, sensitive to glare</option>
+                                    <option value="kapha">Large, clear, thick eyelashes</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width margin-top">
+                            <label for="parikshaNotes"><i class="fa-solid fa-pen-to-square"></i> Practitioner Clinical Notes & Diagnostic Impression</label>
+                            <textarea id="parikshaNotes" class="form-control" rows="4">Patient exhibits strong Pitta digestion (Tikshnagni) with secondary Vata sleep disruption and prominent joint cracking. Nadi shows Mundukagati bouncing pulse rhythm under stress.</textarea>
+                        </div>
+
+                        <div class="form-actions-right">
+                            <button class="btn btn-primary btn-lg" onclick="recalculateAndProceedToBreakdown()">
+                                <i class="fa-solid fa-calculator"></i> Calculate Deterministic Scoring
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+
+                <!-- ================= SCREEN 5: FINALIZED CLINICAL REPORT ================= -->
+                <section id="screen-5" class="screen-view">
+                    <div class="view-header">
+                        <div>
+                            <h2 class="view-title">Clinical Assessment Report & Immutability Ledger</h2>
+                            <p class="view-sub">State lifecycle management and read-only enforcement post-finalization.</p>
+                        </div>
+                        <div class="header-btns">
+                            <button class="btn btn-secondary" onclick="window.print()">
+                                <i class="fa-solid fa-print"></i> Print / PDF Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- State Stepper -->
+                    <div class="stepper-card">
+                        <div class="stepper-header">
+                            <h3><i class="fa-solid fa-diagram-next"></i> Assessment Lifecycle State Machine</h3>
+                            <span class="badge badge-reviewed" id="reportStateBadge">State: REVIEWED</span>
+                        </div>
+
+                        <div class="state-stepper">
+                            <div class="step-node active" id="nodeDraft"><div class="step-num">1</div><span class="step-lbl">DRAFT</span></div>
+                            <div class="step-line"></div>
+                            <div class="step-node active" id="nodeInProgress"><div class="step-num">2</div><span class="step-lbl">IN_PROGRESS</span></div>
+                            <div class="step-line"></div>
+                            <div class="step-node active" id="nodeSubmitted"><div class="step-num">3</div><span class="step-lbl">SUBMITTED</span></div>
+                            <div class="step-line"></div>
+                            <div class="step-node active" id="nodeReviewed"><div class="step-num">4</div><span class="step-lbl">REVIEWED</span></div>
+                            <div class="step-line"></div>
+                            <div class="step-node" id="nodeFinalized"><div class="step-num">5</div><span class="step-lbl">FINALIZED</span></div>
+                        </div>
+
+                        <div class="stepper-actions" id="stepperActionsContainer">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Printable Paper Report -->
+                    <div class="report-paper-card" id="printableReportPaper">
+                        <div class="rep-header">
+                            <div>
+                                <h2 class="rep-main-title"><i class="fa-solid fa-om"></i> AYURESSENCE</h2>
+                                <span class="rep-sub-title">DEHA PRAKRITI CLINICAL ASSESSMENT REPORT</span>
+                            </div>
+                            <div class="rep-meta-block">
+                                <div><strong>Assessment ID:</strong> <span id="repReportId">AE-2026-00142</span></div>
+                                <div><strong>Date:</strong> <span>2026-09-26</span></div>
+                                <div><strong>Status Lock:</strong> <span id="repLockBadge" class="badge badge-unlocked">UNLOCKED</span></div>
+                            </div>
+                        </div>
+
+                        <hr class="rep-hr">
+
+                        <div class="rep-grid-2">
+                            <div class="rep-box">
+                                <h4>Patient Information</h4>
+                                <div><strong>Full Name:</strong> <span id="repPatName">Rajesh Sharma</span></div>
+                                <div><strong>Age / Gender:</strong> <span>42 / MALE</span></div>
+                                <div><strong>Contact:</strong> <span>+91-9876543210</span></div>
+                            </div>
+                            <div class="rep-box">
+                                <h4>Clinical Authority</h4>
+                                <div><strong>Practitioner:</strong> <span id="repDocName">Dr. Ananya Rao, MD (Ayu)</span></div>
+                                <div><strong>Role:</strong> <span id="repDocRole">Doctor</span></div>
+                                <div><strong>Methodology:</strong> Charaka Samhitā Vimānasthāna Ch. 8</div>
+                            </div>
+                        </div>
+
+                        <div class="rep-section">
+                            <h3 class="rep-sec-title">Deha Prakriti Quantitative Analysis</h3>
+                            <div class="rep-dosha-flex">
+                                <div class="rep-dosha-box vata">
+                                    <span class="dosha-name">VĀTA</span>
+                                    <span class="dosha-val" id="repVataPct">42.0%</span>
+                                </div>
+                                <div class="rep-dosha-box pitta">
+                                    <span class="dosha-name">PITTA</span>
+                                    <span class="dosha-val" id="repPittaPct">34.0%</span>
+                                </div>
+                                <div class="rep-dosha-box kapha">
+                                    <span class="dosha-name">KAPHA</span>
+                                    <span class="dosha-val" id="repKaphaPct">24.0%</span>
+                                </div>
+                            </div>
+                            <div class="rep-verdict-line">
+                                <strong>Dominant Prakriti Classification:</strong> <span id="repVerdictText">VĀTA-PITTA PRAKRITI (Dvandvaja)</span>
+                            </div>
+                        </div>
+
+                        <div class="rep-section">
+                            <h3 class="rep-sec-title">Practitioner Examination Notes</h3>
+                            <p id="repNotesParagraph">Patient exhibits strong Pitta digestion (Tikshnagni) with secondary Vata sleep disruption and prominent joint cracking. Nadi shows Mundukagati bouncing pulse rhythm under stress.</p>
+                        </div>
+
+                        <div class="rep-sig-block">
+                            <div class="sig-line"></div>
+                            <div class="sig-name">Authorized Doctor Signature</div>
+                            <div class="sig-title">Dr. Ananya Rao, MD (Ayu) AY-8842</div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+
+            <!-- 6. STICKY PRACTITIONER CONTROL FOOTER (Visible on Screen 2) -->
+            <footer class="ccras-sticky-footer" id="ccrasStickyFooter">
+                <div class="footer-left">
+                    <button class="footer-btn" onclick="exportLedgerCSV()">
+                        <i class="fa-solid fa-download"></i> Export CSV
+                    </button>
+                    <button class="footer-btn" onclick="openShlokaModal()">
+                        <i class="fa-solid fa-scroll"></i> View Verses (Ślokas)
+                    </button>
+                    <button class="footer-btn" onclick="openAdjustmentLog()">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Adjustment Log (0)
+                    </button>
+                    <button class="footer-btn alert-btn" onclick="flagForRescoring()">
+                        <i class="fa-solid fa-flag"></i> Flag for Rescoring
+                    </button>
+                </div>
+
+                <div class="footer-right">
+                    <button class="cta-primary-btn" onclick="switchScreen('screen-5')">
+                        <span>Proceed to Doctor Final Review</span>
+                        <i class="fa-solid fa-arrow-right-long"></i>
+                    </button>
+                </div>
+            </footer>
+
+        </div>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- CHARAKA SAMHITA SHLOKAS MODAL -->
+    <div class="modal-overlay" id="shlokaModal">
+        <div class="modal-box width-lg">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-book-open"></i> Charaka Samhitā Vimānasthāna 8.96–100 Ślokas</h3>
+                <button class="modal-close-btn" onclick="closeModal('shlokaModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="shloka-verse-box">
+                    <span class="shloka-num">Charaka Vimānasthāna 8.98 (Vāta Prakriti Lakshana)</span>
+                    <p class="shloka-sanskrit">"वातलो हि रूक्षकृशाल्पशरीरश्चलो बहुप्रलापी प्रधमनगात्रश्च..."</p>
+                    <p class="shloka-translation">Persons having Vata constitution are dry, emaciated, small-bodied, talkative, with prominent joints and quick movements.</p>
+                </div>
+
+                <div class="shloka-verse-box">
+                    <span class="shloka-num">Charaka Vimānasthāna 8.97 (Pitta Prakriti Lakshana)</span>
+                    <p class="shloka-sanskrit">"पित्तलो हि तीक्ष्णाग्निरुष्णाङ्गो गौरः क्षिप्रप्रकोपश्च..."</p>
+                    <p class="shloka-translation">Persons of Pitta constitution have strong digestive power, warm body, fair/reddish skin tone, and quick temper.</p>
+                </div>
+
+                <div class="shloka-verse-box">
+                    <span class="shloka-num">Charaka Vimānasthāna 8.96 (Kapha Prakriti Lakshana)</span>
+                    <p class="shloka-sanskrit">"श्लेष्मलो हि स्निग्धश्लक्ष्णगौरः सुविभक्ताङ्गः स्थिरात्मा..."</p>
+                    <p class="shloka-translation">Persons of Kapha constitution have smooth, fair skin, well-proportioned body, stable nature, and deep sleep.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('shlokaModal')">Close Reference</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW PATIENT MODAL -->
+    <div class="modal-overlay" id="newPatientModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-plus"></i> Register New Patient</h3>
+                <button class="modal-close-btn" onclick="closeModal('newPatientModal')">&times;</button>
+            </div>
+            <form id="newPatientForm" onsubmit="handleCreatePatient(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="pName">Full Name *</label>
+                        <input type="text" id="pName" class="form-control" required placeholder="e.g. Rajesh Sharma">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="pAge">Age *</label>
+                            <input type="number" id="pAge" class="form-control" required min="1" max="120" placeholder="e.g. 42">
+                        </div>
+                        <div class="form-group">
+                            <label for="pGender">Gender *</label>
+                            <select id="pGender" class="form-control" required>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="pPhone">Contact Phone *</label>
+                        <input type="tel" id="pPhone" class="form-control" required placeholder="+91-9876543210">
+                    </div>
+                    <div class="form-group">
+                        <label for="pHistory">Baseline Medical History</label>
+                        <textarea id="pHistory" class="form-control" rows="3" placeholder="Complaints, agni patterns, lifestyle notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('newPatientModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Patient</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- NEW ASSESSMENT MODAL -->
+    <div class="modal-overlay" id="newAssessmentModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-play"></i> Initiate New Clinical Assessment</h3>
+                <button class="modal-close-btn" onclick="closeModal('newAssessmentModal')">&times;</button>
+            </div>
+            <form id="newAssessmentForm" onsubmit="handleCreateAssessment(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="selectPatientId">Select Patient *</label>
+                        <select id="selectPatientId" class="form-control" required>
+                            <!-- Options populated via JS -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="selectProtocol">Protocol Specification *</label>
+                        <select id="selectProtocol" class="form-control" required>
+                            <option value="CCRAS-PRKRITI-001-v1.0">CCRAS-PRKRITI-001-v1.0 (Charaka Samhita Vimanasthana Ch. 8)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('newAssessmentModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Start Questionnaire</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
+</body>
+</html>
