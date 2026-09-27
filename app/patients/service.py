@@ -85,3 +85,25 @@ class PatientService:
         db.commit()
         db.refresh(patient)
         return patient
+
+    @staticmethod
+    def get_patient_timeline(db: Session, patient_id: str, current_user: Profile) -> List[dict]:
+        patient = PatientService.get_patient_by_id(db, patient_id, current_user)
+        
+        timeline = []
+        for ass in sorted(patient.assessments, key=lambda a: a.created_at, reverse=True):
+            result = ass.results[0] if ass.results else None
+            timeline.append({
+                "assessment_id": str(ass.id),
+                "date": ass.created_at.strftime("%Y-%m-%d"),
+                "status": ass.status,
+                "conducted_by": str(ass.conducted_by) if ass.conducted_by else None,
+                "vata_percentage": float(result.vata_percentage) if result else None,
+                "pitta_percentage": float(result.pitta_percentage) if result else None,
+                "kapha_percentage": float(result.kapha_percentage) if result else None,
+                "dominant_dosha": result.dominant_dosha if result else None,
+                "finalized_at": ass.finalized_at.isoformat() if ass.finalized_at else None
+            })
+
+        return timeline
+

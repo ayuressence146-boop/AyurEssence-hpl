@@ -44,3 +44,13 @@ def update_patient(
 ):
     """Update patient information (Doctor or Student owner)."""
     return PatientService.update_patient(db, patient_id, req, current_user)
+
+@router.get("/{patient_id}/timeline")
+def get_patient_timeline(
+    patient_id: str,
+    db: Session = Depends(get_db),
+    current_user: Profile = Depends(get_current_user)
+):
+    """Retrieve chronological health and Prakriti assessment timeline for a patient."""
+    return PatientService.get_patient_timeline(db, patient_id, current_user)
+

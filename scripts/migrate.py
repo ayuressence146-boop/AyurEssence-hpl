@@ -27,6 +27,7 @@ if __name__ == "__main__":
     try:
         run_sql_file("supabase/migrations/001_initial_schema.sql")
         run_sql_file("supabase/migrations/002_fix_methodology_and_responses.sql")
+        run_sql_file("supabase/migrations/003_add_advanced_clinical_and_educational_features.sql")
         run_sql_file("supabase/seed.sql")
         print("Database migration and seeding completed successfully!")
     except Exception as e:

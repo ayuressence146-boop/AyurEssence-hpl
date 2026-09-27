@@ -12,6 +12,10 @@ from app.auth.router import router as auth_router
 from app.patients.router import router as patients_router
 from app.questionnaires.router import router as questionnaires_router
 from app.assessments.router import router as assessments_router
+from app.recommendations.router import router as recommendations_router
+from app.reminders.router import router as reminders_router
+from app.reports.router import router as reports_router
+from app.educational.router import router as educational_router
 
 # Initialize database schema on startup
 init_db()
@@ -43,6 +47,10 @@ app.include_router(auth_router, prefix=settings.API_V1_STR)
 app.include_router(patients_router, prefix=settings.API_V1_STR)
 app.include_router(questionnaires_router, prefix=settings.API_V1_STR)
 app.include_router(assessments_router, prefix=settings.API_V1_STR)
+app.include_router(recommendations_router)
+app.include_router(reminders_router)
+app.include_router(reports_router)
+app.include_router(educational_router)
 
 @app.get("/health", tags=["Health Check"])
 def health_check():

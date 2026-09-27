@@ -222,3 +222,79 @@ class Report(Base):
     generated_by = Column(String(36), ForeignKey("profiles.id", ondelete="SET NULL"), nullable=True)
     generated_at = Column(DateTime(timezone=True), default=utc_now)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
+class Recommendation(Base):
+    __tablename__ = "recommendations"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    assessment_id = Column(String(36), ForeignKey("assessments.id", ondelete="CASCADE"), nullable=False)
+    patient_id = Column(String(36), ForeignKey("patients.id", ondelete="CASCADE"), nullable=False)
+    draft_text = Column(Text, nullable=False)
+    approved_text = Column(Text, nullable=True)
+    recommended_followup_weeks = Column(Integer, default=4)
+    status = Column(String(20), default="draft")  # draft, approved, modified
+    approved_by = Column(String(36), ForeignKey("profiles.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+    # Relationships
+    assessment = relationship("Assessment")
+    patient = relationship("Patient")
+    approver = relationship("Profile")
+
+
+class FollowupReminder(Base):
+    __tablename__ = "followup_reminders"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    assessment_id = Column(String(36), ForeignKey("assessments.id", ondelete="CASCADE"), nullable=False)
+    patient_id = Column(String(36), ForeignKey("patients.id", ondelete="CASCADE"), nullable=False)
+    created_by = Column(String(36), ForeignKey("profiles.id", ondelete="SET NULL"), nullable=True)
+    scheduled_date = Column(Date, nullable=False)
+    channel = Column(String(20), default="in_app")  # in_app, email, sms, whatsapp
+    status = Column(String(20), default="pending")  # pending, sent, cancelled
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+    # Relationships
+    assessment = relationship("Assessment")
+    patient = relationship("Patient")
+    creator = relationship("Profile")
+
+
+class ReportShareToken(Base):
+    __tablename__ = "report_share_tokens"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    report_id = Column(String(36), ForeignKey("reports.id", ondelete="CASCADE"), nullable=False)
+    token = Column(String(100), unique=True, nullable=False)
+    channel = Column(String(20), nullable=False)  # whatsapp, email, sms
+    recipient = Column(String(255), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    is_accessed = Column(Boolean, default=False)
+    created_by = Column(String(36), ForeignKey("profiles.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+
+    # Relationships
+    report = relationship("Report")
+    creator = relationship("Profile")
+
+
+class MentorFeedback(Base):
+    __tablename__ = "mentor_feedback"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    assessment_id = Column(String(36), ForeignKey("assessments.id", ondelete="CASCADE"), nullable=False)
+    student_id = Column(String(36), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
+    doctor_id = Column(String(36), ForeignKey("profiles.id", ondelete="SET NULL"), nullable=True)
+    feedback_type = Column(String(20), default="tip")  # positive, warning, tip, correction
+    notes = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+
+    # Relationships
+    assessment = relationship("Assessment")
+    student = relationship("Profile", foreign_keys=[student_id])
+    doctor = relationship("Profile", foreign_keys=[doctor_id])
+
