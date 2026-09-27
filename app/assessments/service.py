@@ -59,7 +59,6 @@ class AssessmentService:
 
         patient_id_str = str(req.patient_id)
         questionnaire_id_str = str(req.questionnaire_id)
-        methodology_id_str = str(req.methodology_id)
 
         # Validate Patient
         patient = AssessmentService._verify_patient_access(db, patient_id_str, current_user)
@@ -76,24 +75,11 @@ class AssessmentService:
         if not questionnaire.is_active:
             raise BadRequestException("Questionnaire is inactive")
 
-        # Validate Methodology
-        try:
-            uuid.UUID(methodology_id_str)
-        except ValueError:
-            raise BadRequestException(f"Invalid methodology UUID format: {req.methodology_id}")
-
-        methodology = db.query(Methodology).filter(Methodology.id == methodology_id_str).first()
-        if not methodology:
-            raise NotFoundException(f"Methodology with ID '{req.methodology_id}' not found")
-        if not methodology.is_active:
-            raise BadRequestException("Methodology is inactive")
-
         assessment = Assessment(
             id=str(uuid.uuid4()),
             patient_id=str(patient.id),
             conducted_by=str(current_user.id),
             questionnaire_id=str(questionnaire.id),
-            methodology_id=str(methodology.id),
             status="draft",
             started_at=datetime.now(timezone.utc)
         )
@@ -160,6 +146,13 @@ class AssessmentService:
                 raise UnauthorizedException("Only an authorized DOCTOR can finalize an assessment")
             assessment.finalized_at = datetime.now(timezone.utc)
 
+            # Solution 3: Automatically update patient's primary baseline Prakriti & methodology
+            result = db.query(AssessmentResult).filter(AssessmentResult.assessment_id == str(assessment.id)).first()
+            if result and assessment.patient:
+                assessment.patient.baseline_dominant_dosha = result.dominant_dosha
+                if assessment.questionnaire:
+                    assessment.patient.primary_methodology_id = assessment.questionnaire.methodology_id
+
         assessment.status = target_status
         db.commit()
         db.refresh(assessment)
@@ -190,15 +183,22 @@ class AssessmentService:
         if str(option.question_id) != str(question.id):
             raise BadRequestException("Selected option does not belong to the specified question")
 
+        v_score = float(option.vata_score or 0.0)
+        p_score = float(option.pitta_score or 0.0)
+        k_score = float(option.kapha_score or 0.0)
+
         # Check existing response for upsert
         existing_resp = db.query(Response).filter(
             Response.assessment_id == assessment_id_str,
-            Response.question_id == question_id_str
+            Response.question_id == question_id_str,
+            Response.selected_option_id == selected_option_id_str
         ).first()
 
         if existing_resp:
-            existing_resp.selected_option_id = selected_option_id_str
             existing_resp.text_answer = req.text_answer
+            existing_resp.recorded_vata_score = v_score
+            existing_resp.recorded_pitta_score = p_score
+            existing_resp.recorded_kapha_score = k_score
             existing_resp.updated_at = datetime.now(timezone.utc)
             resp = existing_resp
         else:
@@ -207,7 +207,10 @@ class AssessmentService:
                 assessment_id=assessment_id_str,
                 question_id=question_id_str,
                 selected_option_id=selected_option_id_str,
-                text_answer=req.text_answer
+                text_answer=req.text_answer,
+                recorded_vata_score=v_score,
+                recorded_pitta_score=p_score,
+                recorded_kapha_score=k_score
             )
             db.add(resp)
 
@@ -259,12 +262,14 @@ class AssessmentService:
 
         option_scores = []
         for r in responses:
-            if r.selected_option:
-                option_scores.append({
-                    "vata": float(r.selected_option.vata_score or 0.0),
-                    "pitta": float(r.selected_option.pitta_score or 0.0),
-                    "kapha": float(r.selected_option.kapha_score or 0.0),
-                })
+            v = float(r.recorded_vata_score) if r.recorded_vata_score is not None else float(r.selected_option.vata_score or 0.0) if r.selected_option else 0.0
+            p = float(r.recorded_pitta_score) if r.recorded_pitta_score is not None else float(r.selected_option.pitta_score or 0.0) if r.selected_option else 0.0
+            k = float(r.recorded_kapha_score) if r.recorded_kapha_score is not None else float(r.selected_option.kapha_score or 0.0) if r.selected_option else 0.0
+            option_scores.append({
+                "vata": v,
+                "pitta": p,
+                "kapha": k,
+            })
 
         computed = PrakritiCalculationEngine.compute_prakriti(option_scores)
 

@@ -21,11 +21,18 @@ def test_finalization_immutability(client, doctor_headers, student_headers):
     client.patch(f"/api/assessments/{ass_id}", json={"status": "submitted"}, headers=doctor_headers)
     client.patch(f"/api/assessments/{ass_id}", json={"status": "reviewed"}, headers=doctor_headers)
 
-    # 3. Doctor finalizes -> SUCCESS
+    # 3. Calculate Prakriti & Doctor finalizes -> SUCCESS
+    client.post(f"/api/assessments/{ass_id}/calculate", headers=doctor_headers)
     fin_res = client.patch(f"/api/assessments/{ass_id}", json={"status": "finalized"}, headers=doctor_headers)
     assert fin_res.status_code == 200
     assert fin_res.json()["status"] == "finalized"
     assert fin_res.json()["finalized_at"] is not None
+
+    # Check Migration 002: Verify Patient baseline Prakriti auto-updated
+    patient_res = client.get("/api/patients/00000000-0000-0000-0000-000000000003", headers=doctor_headers)
+    assert patient_res.status_code == 200
+    assert patient_res.json()["baseline_dominant_dosha"] == "Vata"
+    assert patient_res.json()["primary_methodology_id"] == "11111111-1111-1111-1111-111111111111"
 
     # 4. Attempt post-finalization response update -> REJECTED 409
     resp_mod = client.post(f"/api/assessments/{ass_id}/responses", json={
@@ -46,3 +53,4 @@ def test_finalization_immutability(client, doctor_headers, student_headers):
     calc_mod = client.post(f"/api/assessments/{ass_id}/calculate", headers=doctor_headers)
     assert calc_mod.status_code == 409
     assert calc_mod.json()["error"]["code"] == "INVALID_STATE"
+

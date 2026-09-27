@@ -8,7 +8,7 @@ from app.calculation.schemas import AssessmentResultResponse
 class AssessmentCreateRequest(BaseModel):
     patient_id: str
     questionnaire_id: str
-    methodology_id: str
+    methodology_id: Optional[str] = None
 
 class AssessmentStatusUpdateRequest(BaseModel):
     status: str = Field(..., description="Target status: draft, in_progress, submitted, reviewed, finalized")
@@ -24,6 +24,9 @@ class ResponseDetailResponse(BaseModel):
     question_id: str
     selected_option_id: Optional[str] = None
     text_answer: Optional[str] = None
+    recorded_vata_score: float = 0.0
+    recorded_pitta_score: float = 0.0
+    recorded_kapha_score: float = 0.0
     created_at: datetime
     updated_at: datetime
 
@@ -40,7 +43,7 @@ class AssessmentDetailResponse(BaseModel):
     patient_id: str
     conducted_by: Optional[str] = None
     questionnaire_id: str
-    methodology_id: str
+    methodology_id: Optional[str] = None
     status: str
     started_at: datetime
     submitted_at: Optional[datetime] = None

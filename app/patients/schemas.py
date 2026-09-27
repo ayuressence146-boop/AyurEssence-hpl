@@ -10,6 +10,8 @@ class PatientCreateRequest(BaseModel):
     phone: Optional[str] = Field(None, max_length=20)
     email: Optional[EmailStr] = None
     address: Optional[str] = None
+    primary_methodology_id: Optional[str] = None
+    baseline_dominant_dosha: Optional[str] = None
 
 class PatientUpdateRequest(BaseModel):
     full_name: Optional[str] = Field(None, min_length=2, max_length=150)
@@ -18,6 +20,8 @@ class PatientUpdateRequest(BaseModel):
     phone: Optional[str] = Field(None, max_length=20)
     email: Optional[EmailStr] = None
     address: Optional[str] = None
+    primary_methodology_id: Optional[str] = None
+    baseline_dominant_dosha: Optional[str] = None
     is_active: Optional[bool] = None
 
 class PatientResponse(BaseModel):
@@ -29,13 +33,15 @@ class PatientResponse(BaseModel):
     phone: Optional[str] = None
     email: Optional[str] = None
     address: Optional[str] = None
+    primary_methodology_id: Optional[str] = None
+    baseline_dominant_dosha: Optional[str] = None
     is_active: bool
     created_at: datetime
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 
-    @field_validator("id", "created_by", mode="before")
+    @field_validator("id", "created_by", "primary_methodology_id", mode="before")
     def coerce_uuid_to_str(cls, v):
         if isinstance(v, uuid.UUID):
             return str(v)

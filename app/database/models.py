@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Boolean, DateTime, Date, Numeric, Text, ForeignKey, Integer, UniqueConstraint, JSON
+from sqlalchemy import Column, String, Boolean, DateTime, Date, Numeric, Text, ForeignKey, Integer, JSON
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -39,12 +39,15 @@ class Patient(Base):
     phone = Column(String(20), nullable=True)
     email = Column(String(255), nullable=True)
     address = Column(Text, nullable=True)
+    primary_methodology_id = Column(String(36), ForeignKey("methodologies.id", ondelete="SET NULL"), nullable=True)
+    baseline_dominant_dosha = Column(String(30), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=utc_now)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
     # Relationships
     creator = relationship("Profile", back_populates="patients", foreign_keys=[created_by])
+    primary_methodology = relationship("Methodology")
     assessments = relationship("Assessment", back_populates="patient", cascade="all, delete-orphan")
 
 
@@ -138,7 +141,6 @@ class Assessment(Base):
     patient_id = Column(String(36), ForeignKey("patients.id", ondelete="CASCADE"), nullable=False)
     conducted_by = Column(String(36), ForeignKey("profiles.id", ondelete="SET NULL"), nullable=True)
     questionnaire_id = Column(String(36), ForeignKey("questionnaires.id", ondelete="RESTRICT"), nullable=False)
-    methodology_id = Column(String(36), ForeignKey("methodologies.id", ondelete="RESTRICT"), nullable=False)
     status = Column(String(20), default="draft")  # draft, in_progress, submitted, reviewed, finalized
     started_at = Column(DateTime(timezone=True), default=utc_now)
     submitted_at = Column(DateTime(timezone=True), nullable=True)
@@ -150,21 +152,26 @@ class Assessment(Base):
     patient = relationship("Patient", back_populates="assessments")
     conductor = relationship("Profile", back_populates="assessments")
     questionnaire = relationship("Questionnaire")
-    methodology = relationship("Methodology")
     responses = relationship("Response", back_populates="assessment", cascade="all, delete-orphan")
     observations = relationship("Observation", back_populates="assessment", cascade="all, delete-orphan")
     results = relationship("AssessmentResult", back_populates="assessment", cascade="all, delete-orphan")
 
+    @property
+    def methodology_id(self):
+        return self.questionnaire.methodology_id if self.questionnaire else None
+
 
 class Response(Base):
     __tablename__ = "responses"
-    __table_args__ = (UniqueConstraint("assessment_id", "question_id", name="unique_assessment_question"),)
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     assessment_id = Column(String(36), ForeignKey("assessments.id", ondelete="CASCADE"), nullable=False)
     question_id = Column(String(36), ForeignKey("questions.id", ondelete="RESTRICT"), nullable=False)
     selected_option_id = Column(String(36), ForeignKey("question_options.id", ondelete="RESTRICT"), nullable=True)
     text_answer = Column(Text, nullable=True)
+    recorded_vata_score = Column(Numeric(6, 2), default=0)
+    recorded_pitta_score = Column(Numeric(6, 2), default=0)
+    recorded_kapha_score = Column(Numeric(6, 2), default=0)
     created_at = Column(DateTime(timezone=True), default=utc_now)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
