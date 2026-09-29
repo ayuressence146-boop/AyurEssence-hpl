@@ -60,7 +60,7 @@ const Login = () => {
             <input 
               type="text" 
               required
-              className="w-full pl-10 pr-4 py-2.5 bg-white/40 hover:bg-white/60 focus:bg-white/80 backdrop-blur-md border border-white/70 focus:border-[#2b2721]/50 rounded-xl text-sm text-[#2b2721] placeholder-[#2b2721]/45 focus:outline-none focus:ring-2 focus:ring-[#2b2721]/15 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)]"
+              className="w-full pl-10 pr-4 py-2.5 bg-white/35 hover:bg-white/50 focus:bg-white/70 backdrop-blur-md border border-white/60 focus:border-[#2b2721]/60 rounded-xl text-sm text-[#2b2721] placeholder-[#2b2721]/45 focus:outline-none focus:ring-2 focus:ring-[#2b2721]/15 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)]"
               placeholder="Enter your email"
               value={formData.username}
               onChange={e => setFormData({...formData, username: e.target.value})}
@@ -80,7 +80,7 @@ const Login = () => {
             <input 
               type="password" 
               required
-              className="w-full pl-10 pr-4 py-2.5 bg-white/40 hover:bg-white/60 focus:bg-white/80 backdrop-blur-md border border-white/70 focus:border-[#2b2721]/50 rounded-xl text-sm text-[#2b2721] placeholder-[#2b2721]/45 focus:outline-none focus:ring-2 focus:ring-[#2b2721]/15 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)]"
+              className="w-full pl-10 pr-4 py-2.5 bg-white/35 hover:bg-white/50 focus:bg-white/70 backdrop-blur-md border border-white/60 focus:border-[#2b2721]/60 rounded-xl text-sm text-[#2b2721] placeholder-[#2b2721]/45 focus:outline-none focus:ring-2 focus:ring-[#2b2721]/15 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)]"
               placeholder="Enter your password"
               value={formData.password}
               onChange={e => setFormData({...formData, password: e.target.value})}

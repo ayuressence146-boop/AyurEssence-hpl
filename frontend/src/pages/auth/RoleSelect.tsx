@@ -55,7 +55,7 @@ const RoleSelect = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: idx * 0.08 }}
               onClick={() => handleSelectRole(role.id)}
-              className="group relative cursor-pointer bg-white/45 hover:bg-white/70 backdrop-blur-md border border-white/70 hover:border-white/95 rounded-2xl p-4 transition-all duration-300 shadow-[0_4px_16px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 overflow-hidden flex items-start space-x-3.5"
+              className="group relative cursor-pointer bg-white/35 hover:bg-white/55 backdrop-blur-md border border-white/60 hover:border-white/90 rounded-2xl p-4 transition-all duration-300 shadow-[0_4px_16px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 overflow-hidden flex items-start space-x-3.5"
             >
               <div className="w-10 h-10 rounded-xl bg-[#2b2721] text-[#ece7dc] flex items-center justify-center flex-shrink-0 shadow-md group-hover:scale-105 transition-transform mt-0.5">
                 <Icon size={18} strokeWidth={2} />

@@ -55,7 +55,7 @@ const Register = () => {
         )}
         
         {/* Selected Role Display Banner */}
-        <div className="flex items-center justify-between bg-white/45 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/70 shadow-sm mb-0.5">
+        <div className="flex items-center justify-between bg-white/35 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/60 shadow-sm mb-0.5">
           <div className="flex items-center space-x-2">
             <span className="text-[11px] text-[#2b2721]/70 uppercase tracking-wider font-semibold">Role:</span>
             <span className="text-xs font-bold capitalize text-[#2b2721] bg-[#2b2721]/10 px-2 py-0.5 rounded-md border border-[#2b2721]/10">
@@ -76,7 +76,7 @@ const Register = () => {
             <input 
               type="text" 
               required
-              className="w-full pl-10 pr-4 py-2.5 bg-white/40 hover:bg-white/60 focus:bg-white/80 backdrop-blur-md border border-white/70 focus:border-[#2b2721]/50 rounded-xl text-sm text-[#2b2721] placeholder-[#2b2721]/45 focus:outline-none focus:ring-2 focus:ring-[#2b2721]/15 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)]"
+              className="w-full pl-10 pr-4 py-2.5 bg-white/35 hover:bg-white/50 focus:bg-white/70 backdrop-blur-md border border-white/60 focus:border-[#2b2721]/60 rounded-xl text-sm text-[#2b2721] placeholder-[#2b2721]/45 focus:outline-none focus:ring-2 focus:ring-[#2b2721]/15 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)]"
               placeholder={formData.role === 'doctor' ? "Dr. Full Name" : "Full Name"}
               value={formData.name}
               onChange={e => setFormData({...formData, name: e.target.value})}
@@ -93,7 +93,7 @@ const Register = () => {
             <input 
               type="email" 
               required
-              className="w-full pl-10 pr-4 py-2.5 bg-white/40 hover:bg-white/60 focus:bg-white/80 backdrop-blur-md border border-white/70 focus:border-[#2b2721]/50 rounded-xl text-sm text-[#2b2721] placeholder-[#2b2721]/45 focus:outline-none focus:ring-2 focus:ring-[#2b2721]/15 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)]"
+              className="w-full pl-10 pr-4 py-2.5 bg-white/35 hover:bg-white/50 focus:bg-white/70 backdrop-blur-md border border-white/60 focus:border-[#2b2721]/60 rounded-xl text-sm text-[#2b2721] placeholder-[#2b2721]/45 focus:outline-none focus:ring-2 focus:ring-[#2b2721]/15 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)]"
               placeholder="email@example.com"
               value={formData.email}
               onChange={e => setFormData({...formData, email: e.target.value})}
@@ -110,7 +110,7 @@ const Register = () => {
             <input 
               type="password" 
               required
-              className="w-full pl-10 pr-4 py-2.5 bg-white/40 hover:bg-white/60 focus:bg-white/80 backdrop-blur-md border border-white/70 focus:border-[#2b2721]/50 rounded-xl text-sm text-[#2b2721] placeholder-[#2b2721]/45 focus:outline-none focus:ring-2 focus:ring-[#2b2721]/15 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)]"
+              className="w-full pl-10 pr-4 py-2.5 bg-white/35 hover:bg-white/50 focus:bg-white/70 backdrop-blur-md border border-white/60 focus:border-[#2b2721]/60 rounded-xl text-sm text-[#2b2721] placeholder-[#2b2721]/45 focus:outline-none focus:ring-2 focus:ring-[#2b2721]/15 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)]"
               placeholder="Create a password"
               value={formData.password}
               onChange={e => setFormData({...formData, password: e.target.value})}
