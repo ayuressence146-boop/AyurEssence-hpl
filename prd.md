@@ -929,3 +929,26 @@ The complete vision becomes:
                     │ Storage         │
                     └─────────────────┘
 
+
+________________________________________
+33. Newly Added Features (Phase 2 Roadmap & Implementations)
+
+Patient Features:
+A. Personalized Follow-up Recommendation
+After assessment:
+Prakriti Result → Personalized recommendations → Follow-up suggestion (e.g., Recommended review: 4 weeks).
+Important: The system does not independently diagnose or prescribe treatment. The doctor can approve/edit the recommendation.
+
+B. Report Sharing
+Patient/doctor can select to share the report via:
+- WhatsApp
+- Email
+- SMS
+Architecture flow: Assessment Finalized → Generate Report → Doctor approves → Share.
+
+Prakriti Assessment — Full Question Bank:
+Expanded assessment coverage including:
+1. Body Build and Skin (Body size, Skin type, Joints, Body movement, Movement quality)
+2. Hair, Nails, and Complexion (Hair thickness/oiliness, Nail texture, Skin complexion)
+Each feature maps specific traits to Vata, Pitta, and Kapha dominance for accurate Prakriti calculation.
+
