@@ -35,12 +35,12 @@ const RoleSelect = () => {
   };
 
   return (
-    <div className="flex flex-col items-center text-[#2b2721]">
+    <div className="flex flex-col items-center text-[#ece7dc]">
       <div className="text-center mb-5">
-        <h2 className="text-2.5xl font-serif font-bold text-[#2b2721] mb-1 tracking-tight">
+        <h2 className="text-2.5xl font-serif font-bold text-[#ece7dc] mb-1 tracking-tight">
           Select Your Portal
         </h2>
-        <p className="text-xs text-[#2b2721]/70 max-w-sm mx-auto font-medium">
+        <p className="text-xs text-[#ece7dc]/75 max-w-sm mx-auto font-medium">
           Choose how you would like to experience the AyurEssence platform
         </p>
       </div>
@@ -55,27 +55,27 @@ const RoleSelect = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: idx * 0.08 }}
               onClick={() => handleSelectRole(role.id)}
-              className="group relative cursor-pointer bg-white/35 hover:bg-white/55 backdrop-blur-md border border-white/60 hover:border-white/90 rounded-2xl p-4 transition-all duration-300 shadow-[0_4px_16px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 overflow-hidden flex items-start space-x-3.5"
+              className="group relative cursor-pointer bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/15 hover:border-white/35 rounded-2xl p-4 transition-all duration-300 shadow-lg hover:-translate-y-0.5 overflow-hidden flex items-start space-x-3.5"
             >
-              <div className="w-10 h-10 rounded-xl bg-[#2b2721] text-[#ece7dc] flex items-center justify-center flex-shrink-0 shadow-md group-hover:scale-105 transition-transform mt-0.5">
+              <div className="w-10 h-10 rounded-xl bg-[#ece7dc] text-[#2b2721] flex items-center justify-center flex-shrink-0 shadow-md group-hover:scale-105 transition-transform mt-0.5">
                 <Icon size={18} strokeWidth={2} />
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-serif font-bold text-sm sm:text-base text-[#2b2721] group-hover:text-[#000] transition-colors">
+                  <h3 className="font-serif font-bold text-sm sm:text-base text-[#ece7dc] group-hover:text-white transition-colors">
                     {role.title}
                   </h3>
-                  <span className="text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#2b2721]/10 backdrop-blur-sm border border-[#2b2721]/10 text-[#2b2721]/80">
+                  <span className="text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#ece7dc]/15 backdrop-blur-sm border border-[#ece7dc]/20 text-[#ece7dc]">
                     {role.badge}
                   </span>
                 </div>
-                <p className="text-[11px] sm:text-xs text-[#2b2721]/75 leading-relaxed font-medium">
+                <p className="text-[11px] sm:text-xs text-[#ece7dc]/75 leading-relaxed font-medium">
                   {role.description}
                 </p>
               </div>
 
-              <div className="self-center pl-1 text-[#2b2721]/40 group-hover:text-[#2b2721] group-hover:translate-x-1 transition-all">
+              <div className="self-center pl-1 text-[#ece7dc]/50 group-hover:text-[#ece7dc] group-hover:translate-x-1 transition-all">
                 <ArrowRight size={16} />
               </div>
             </motion.div>
@@ -83,11 +83,11 @@ const RoleSelect = () => {
         })}
       </div>
 
-      <div className="mt-5 text-center text-xs text-[#2b2721]/70">
+      <div className="mt-5 text-center text-xs text-[#ece7dc]/75">
         Already registered?{' '}
         <button
           onClick={() => navigate('/auth/login')}
-          className="text-[#2b2721] font-bold hover:underline ml-0.5 focus:outline-none"
+          className="text-[#ece7dc] font-bold hover:underline ml-0.5 focus:outline-none"
         >
           Sign in to your account
         </button>
@@ -97,4 +97,5 @@ const RoleSelect = () => {
 };
 
 export default RoleSelect;
+
 

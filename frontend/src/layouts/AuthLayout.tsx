@@ -92,15 +92,15 @@ const AuthLayout = () => {
           <div className="absolute -inset-1 bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-teal-500/20 rounded-[32px] blur-xl opacity-75 pointer-events-none" />
 
           {/* Glassmorphic Card */}
-          <div className="relative bg-white/35 backdrop-blur-2xl border border-white/50 shadow-[0_25px_60px_rgba(0,0,0,0.35)] rounded-[28px] p-7 sm:p-9 text-[#2b2721] overflow-hidden">
+          <div className="relative bg-[#1c1917]/75 backdrop-blur-2xl border border-white/20 shadow-[0_30px_70px_rgba(0,0,0,0.65)] rounded-[28px] p-7 sm:p-9 text-[#ece7dc] overflow-hidden">
             {/* Shimmer Line Top */}
-            <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-white/80 to-transparent" />
+            <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#ece7dc]/40 to-transparent" />
 
             {/* Decorative Botany Accent */}
             <img 
               src="/landing-pages/meng-to-sketchbook/botany-left.png" 
               alt="" 
-              className="absolute left-0 bottom-0 w-[140px] opacity-15 pointer-events-none select-none z-0" 
+              className="absolute left-0 bottom-0 w-[140px] opacity-15 invert pointer-events-none select-none z-0" 
             />
 
             {/* Form Content */}
