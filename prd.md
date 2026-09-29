@@ -952,3 +952,37 @@ Expanded assessment coverage including:
 2. Hair, Nails, and Complexion (Hair thickness/oiliness, Nail texture, Skin complexion)
 Each feature maps specific traits to Vata, Pitta, and Kapha dominance for accurate Prakriti calculation.
 
+________________________________________
+34. Extended Patient & Educational Workflows
+
+1. Continuous Patient Journey
+Instead of an isolated one-time assessment, patients receive a continuing digital record:
+Patient → Prakriti Assessment → Explainable Result → Doctor Review → Doctor-Approved Recommendation → Digital Report → Follow-up → Future Assessment → Patient Timeline.
+
+2. AI-Assisted, Practitioner-Controlled Recommendations (Human-in-the-Loop)
+Assessment Data → System generates draft → Doctor reviews/modifies → Doctor approves → Patient receives.
+This ensures quick processing while maintaining clinical responsibility.
+
+3. Secure Digital Report Sharing
+Digital Report → Secure Share (WhatsApp, Email, SMS) via a temporary access mechanism rather than exposing the underlying database directly.
+
+4. Longitudinal Patient Timeline
+Turns isolated assessments into a longitudinal patient record, allowing practitioners to track constitutional trends across multiple visits.
+
+5. Closed-Loop Follow-up System
+Assess → Review → Follow-up scheduled → Reminder → Patient returns → Reassess → History updated.
+
+6. Single Patient Context for Doctors
+Consolidates scattered artifacts (paper questionnaires, notebooks, messages) into one unified digital patient tree (Assessments, Responses, Observations, Results, Reports, Recommendations, Follow-ups).
+
+7. Supervised Learning Environment for Students
+Student conducts assessment → Records interpretation → Doctor reviews → Student sees comparison → Doctor gives feedback → Student improves.
+
+8. Student vs. Doctor Comparison (Learning by Review)
+The platform allows the student to understand: What I observed → What I interpreted → What the practitioner verified → What feedback I received, facilitating a learning-by-review process.
+
+9. Mentor Feedback System
+Doctors become mentors, providing structured feedback (Positive, Warning, Tip, Correction) to students based on their clinical interpretations.
+
+10. Student Analytics
+Tracks educational progress: Assessments conducted → Assessments reviewed → Feedback received → Pending assessments, measuring practice volume rather than grading.

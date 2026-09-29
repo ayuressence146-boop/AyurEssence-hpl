@@ -1122,3 +1122,14 @@ The backend has been updated to include advanced features and schema refinements
 - **Methodology Linkage Refinement**: The `methodology_id` is now derived directly from the linked `Questionnaire` during Assessment creation, simplifying the process and ensuring data integrity.
 - **Score Snapshots per Response**: `responses` now capture the snapshot of `vata_score`, `pitta_score`, and `kapha_score` at the time of answering. This ensures historical consistency even if the questionnaire methodology is updated later. Multi-choice responses and `selected_options` (JSONB) are now supported.
 - **Patient Baseline Tracking**: The `patients` table has been updated to include `baseline_dominant_dosha` and `primary_methodology_id`. When an Assessment is finalized by a doctor, the patient's baseline is automatically updated to reflect the most recent Prakriti calculation.
+
+---
+
+# 35. Extended Feature Concepts (Phase 2 Architecture)
+
+The backend design has been expanded to support the following advanced workflows:
+
+- **Continuous Patient Journey & Follow-ups**: Incorporates longitudinal patient timelines for historical tracking (linking multiple assessments over time) and a closed-loop follow-up care cycle.
+- **Human-in-the-Loop Recommendations**: AI-generated assessment interpretations and recommendations are modeled as "drafts" requiring explicit Doctor approval/modification before becoming patient-facing.
+- **Supervised Learning & Mentorship Architecture**: Introduces a structural distinction between Student and Doctor interpretations. Students submit draft interpretations which are reviewed and verified by Doctors. The system captures "Mentor Feedback" (Positive, Warning, Tip, Correction) and provides educational analytics tracking assessment practice volume.
+- **Secure Shareable Reports**: Architecture explicitly models temporary access tokens/mechanisms for sharing finalized reports via external channels (WhatsApp/Email/SMS) instead of direct database exposure.
