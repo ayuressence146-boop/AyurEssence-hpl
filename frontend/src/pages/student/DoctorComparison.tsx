@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Award, CheckCircle2, AlertTriangle, ArrowLeft, UserCheck, Stethoscope, Sparkles, HelpCircle } from 'lucide-react';
-import { getAssessmentById, Assessment, getPatients, Patient } from '../../services/dataStore';
+import { Award, ArrowLeft, UserCheck } from 'lucide-react';
+import { getAssessmentById, type Assessment } from '../../services/dataStore';
 
 const DoctorComparison = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,10 +16,10 @@ const DoctorComparison = () => {
   }, [id]);
 
   const studentData = {
-    prakriti: assessment?.prakriti || 'Vata-Pitta',
-    vataScore: assessment?.vataScore || 45,
-    pittaScore: assessment?.pittaScore || 35,
-    kaphaScore: assessment?.kaphaScore || 20,
+    prakriti: assessment?.calculatedScores?.dominant || 'Vata-Pitta',
+    vataScore: assessment?.calculatedScores?.vata || 45,
+    pittaScore: assessment?.calculatedScores?.pitta || 35,
+    kaphaScore: assessment?.calculatedScores?.kapha || 20,
     nadi: 'Sarpa Gati (Irregular Vata Pulse)',
     jihva: 'Sama (Thick Coat / Agni Mandya)',
     twak: 'Ruksha (Dry Skin Texture)'

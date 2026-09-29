@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Award, ArrowRight, BookOpen, CheckCircle, BarChart2, ShieldCheck, Flame, Layers } from 'lucide-react';
-import { getAssessmentById, Assessment, getPatients, Patient } from '../../services/dataStore';
+import { Award, ArrowRight, BookOpen, CheckCircle, BarChart2 } from 'lucide-react';
+import { getAssessmentById, getPatients, type Assessment, type Patient } from '../../services/dataStore';
 
 const StudentInterpretation = () => {
   const { id } = useParams<{ id: string }>();
@@ -80,7 +80,7 @@ const StudentInterpretation = () => {
 
           <div className="text-center p-4 bg-amber-800/10 rounded-2xl border border-amber-900/15">
             <span className="text-xs font-semibold text-amber-800 uppercase tracking-wider">Primary Phenotype</span>
-            <h2 className="text-3xl font-serif font-bold text-amber-950 mt-1">{assessment.prakriti}</h2>
+            <h2 className="text-3xl font-serif font-bold text-amber-950 mt-1">{assessment.calculatedScores?.dominant || 'Vata-Pitta'}</h2>
             <span className="text-xs text-amber-900/70 block mt-1">Dvandvaja (Dual-Dosha Dominance)</span>
           </div>
 
@@ -88,30 +88,30 @@ const StudentInterpretation = () => {
             <div>
               <div className="flex justify-between text-xs font-bold text-amber-950 mb-1">
                 <span>Vata Dosha</span>
-                <span>{assessment.vataScore}%</span>
+                <span>{assessment.calculatedScores?.vata || 40}%</span>
               </div>
               <div className="w-full bg-amber-900/10 h-3 rounded-full overflow-hidden">
-                <div className="bg-amber-700 h-full rounded-full" style={{ width: `${assessment.vataScore}%` }} />
+                <div className="bg-amber-700 h-full rounded-full" style={{ width: `${assessment.calculatedScores?.vata || 40}%` }} />
               </div>
             </div>
 
             <div>
               <div className="flex justify-between text-xs font-bold text-amber-950 mb-1">
                 <span>Pitta Dosha</span>
-                <span>{assessment.pittaScore}%</span>
+                <span>{assessment.calculatedScores?.pitta || 35}%</span>
               </div>
               <div className="w-full bg-amber-900/10 h-3 rounded-full overflow-hidden">
-                <div className="bg-red-700 h-full rounded-full" style={{ width: `${assessment.pittaScore}%` }} />
+                <div className="bg-red-700 h-full rounded-full" style={{ width: `${assessment.calculatedScores?.pitta || 35}%` }} />
               </div>
             </div>
 
             <div>
               <div className="flex justify-between text-xs font-bold text-amber-950 mb-1">
                 <span>Kapha Dosha</span>
-                <span>{assessment.kaphaScore}%</span>
+                <span>{assessment.calculatedScores?.kapha || 25}%</span>
               </div>
               <div className="w-full bg-amber-900/10 h-3 rounded-full overflow-hidden">
-                <div className="bg-emerald-700 h-full rounded-full" style={{ width: `${assessment.kaphaScore}%` }} />
+                <div className="bg-emerald-700 h-full rounded-full" style={{ width: `${assessment.calculatedScores?.kapha || 25}%` }} />
               </div>
             </div>
           </div>
@@ -126,12 +126,12 @@ const StudentInterpretation = () => {
             </h3>
 
             <div className="bg-white/60 p-4 rounded-xl border border-amber-900/10 text-sm text-amber-950 leading-relaxed">
-              {assessment.practitionerNotes || 'Patient demonstrated classic Vata-Pitta symptoms including irregular digestion, dry skin, and heightened heat sensitivity in afternoon.'}
+              {'Patient demonstrated classic Vata-Pitta symptoms including irregular digestion, dry skin, and heightened heat sensitivity in afternoon.'}
             </div>
 
             <h4 className="text-sm font-bold text-amber-950 mt-4">Formulated Ahara & Vihara Plan</h4>
             <div className="space-y-2">
-              {assessment.recommendations?.map((rec, i) => (
+              {(assessment.recommendations?.lifestyle || ['Triphala Churna at bedtime with warm water']).map((rec: string, i: number) => (
                 <div key={i} className="flex items-center space-x-3 p-3 bg-white/40 border border-amber-900/10 rounded-xl text-xs text-amber-950">
                   <CheckCircle size={16} className="text-amber-800 shrink-0" />
                   <span>{rec}</span>

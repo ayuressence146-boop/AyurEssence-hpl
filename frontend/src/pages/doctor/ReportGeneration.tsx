@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FileText, ArrowLeft, ArrowRight, ShieldCheck, CheckCircle2, Sparkles } from 'lucide-react';
-import { dataStore, AssessmentRecord, PatientRecord } from '../../services/dataStore';
+import { dataStore, type AssessmentRecord, type PatientRecord } from '../../services/dataStore';
 
 const ReportGeneration = () => {
   const navigate = useNavigate();

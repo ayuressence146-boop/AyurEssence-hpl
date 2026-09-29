@@ -122,7 +122,7 @@ const StudentAnalytics = () => {
               <div>
                 <h4 className="text-sm font-bold text-amber-950">Master of Trividha Pariksha</h4>
                 <p className="text-xs text-amber-900/70 mt-0.5">
-                  Completed 20+ comprehensive patient assessments with >90% diagnostic alignment.
+                  Completed 20+ comprehensive patient assessments with &gt;90% diagnostic alignment.
                 </p>
               </div>
             </div>

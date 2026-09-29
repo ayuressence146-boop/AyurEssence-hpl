@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BookOpen, CheckCircle, ArrowRight, User, Stethoscope, Sparkles, AlertCircle } from 'lucide-react';
-import { getPatients, saveAssessment, Patient } from '../../services/dataStore';
+import { getPatients, saveAssessment, type Patient } from '../../services/dataStore';
 
 const StudentAssessment = () => {
   const navigate = useNavigate();
@@ -38,18 +38,18 @@ const StudentAssessment = () => {
     const newAsm = {
       id: `asm-${Date.now()}`,
       patientId: selectedPatient.id,
+      patientName: selectedPatient.name,
+      evaluatorRole: 'student' as const,
+      evaluatorName: 'Student Evaluator',
       date: new Date().toISOString().split('T')[0],
-      prakriti: vataScore > pittaScore && vataScore > kaphaScore ? 'Vata-Pitta' : 'Pitta-Kapha',
-      vataScore,
-      pittaScore,
-      kaphaScore,
-      status: 'Completed' as const,
-      practitionerNotes: studentNotes || 'Student diagnostic evaluation submitted for review.',
-      recommendations: [
-        'Avoid cold dry raw foods during early morning',
-        'Incorporate Warm Sesame Oil Abhyanga',
-        'Triphala Churna at bedtime with warm water'
-      ]
+      status: 'In Progress' as const,
+      responses: {},
+      calculatedScores: {
+        vata: vataScore,
+        pitta: pittaScore,
+        kapha: kaphaScore,
+        dominant: vataScore > pittaScore && vataScore > kaphaScore ? 'Vata-Pitta' : 'Pitta-Kapha'
+      }
     };
 
     saveAssessment(newAsm);
@@ -123,7 +123,7 @@ const StudentAssessment = () => {
                 >
                   <div>
                     <p className="font-bold text-amber-950 text-sm">{p.name}</p>
-                    <p className="text-xs text-amber-900/70">{p.patientId} • {p.age} yrs • {p.gender}</p>
+                    <p className="text-xs text-amber-900/70">{p.id} • {p.age} yrs • {p.gender}</p>
                   </div>
                   {selectedPatientId === p.id && <CheckCircle size={18} className="text-amber-800" />}
                 </div>

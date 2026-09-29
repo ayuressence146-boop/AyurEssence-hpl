@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, FileText, CheckCircle, BarChart3, AlertCircle, ArrowRight, BookOpen, Star, Sparkles, Award } from 'lucide-react';
-import { getPatients, getAssessments, Patient, Assessment } from '../../services/dataStore';
+import { Users, FileText, CheckCircle, BarChart3, ArrowRight, BookOpen, Sparkles, Award } from 'lucide-react';
+import { getPatients, getAssessments, type Patient, type Assessment } from '../../services/dataStore';
 
 const StudentDashboard = () => {
   const navigate = useNavigate();

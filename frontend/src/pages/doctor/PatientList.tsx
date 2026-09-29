@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Plus, UserPlus, Eye, Clock, HeartPulse, Filter } from 'lucide-react';
-import { dataStore, PatientRecord } from '../../services/dataStore';
+import { dataStore, type PatientRecord } from '../../services/dataStore';
 
 const PatientList = () => {
   const navigate = useNavigate();

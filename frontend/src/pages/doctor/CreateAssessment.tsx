@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { HeartPulse, ArrowLeft, ArrowRight, UserCheck, Stethoscope, GraduationCap } from 'lucide-react';
-import { dataStore, PatientRecord } from '../../services/dataStore';
+import { dataStore, type PatientRecord } from '../../services/dataStore';
 
 const CreateAssessment = () => {
   const navigate = useNavigate();

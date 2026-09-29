@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Calendar, User, FileText, CheckCircle2, Clock, ChevronRight, BookOpen } from 'lucide-react';
-import { getPatients, getAssessments, Patient, Assessment } from '../../services/dataStore';
+import { Search, Filter, Calendar, User, FileText, BookOpen } from 'lucide-react';
+import { getPatients, getAssessments, type Patient, type Assessment } from '../../services/dataStore';
 
 const AssignedAssessments = () => {
   const navigate = useNavigate();

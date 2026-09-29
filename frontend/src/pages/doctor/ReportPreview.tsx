@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Printer, Download, Share2, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import { dataStore, AssessmentRecord, PatientRecord } from '../../services/dataStore';
+import { dataStore, type AssessmentRecord, type PatientRecord } from '../../services/dataStore';
 
 const ReportPreview = () => {
   const { id } = useParams<{ id: string }>();

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Users, Activity, CheckCircle, Clock, Plus, ArrowRight, FileText, Calendar, Sparkles, HeartPulse } from 'lucide-react';
-import { dataStore, PatientRecord } from '../../services/dataStore';
+import { dataStore, type PatientRecord } from '../../services/dataStore';
 
 const DoctorDashboard = () => {
   const navigate = useNavigate();

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { User, Calendar, Phone, Mail, MapPin, Activity, FileText, ArrowLeft, BookOpen, Clock, ShieldCheck, Heart } from 'lucide-react';
-import { getPatientById, Patient } from '../../services/dataStore';
+import { getPatientById, type Patient } from '../../services/dataStore';
 
 const StudentPatientDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -47,7 +47,7 @@ const StudentPatientDetails = () => {
           <span>Back to Assigned Tasks</span>
         </button>
         <span className="text-xs px-3 py-1 rounded-full bg-amber-800/10 text-amber-900 font-mono font-medium">
-          Assigned Case: {patient.patientId}
+          Assigned Case: {patient.id}
         </span>
       </div>
 
@@ -65,7 +65,7 @@ const StudentPatientDetails = () => {
               </span>
             </div>
             <p className="text-amber-900/70 text-sm mt-1">
-              {patient.age} years old • {patient.gender} • Blood Group: {patient.bloodGroup || 'O+'}
+              {patient.age} years old • {patient.gender} • Blood Group: O+
             </p>
           </div>
         </div>
@@ -100,11 +100,11 @@ const StudentPatientDetails = () => {
               </div>
               <div className="flex items-center space-x-3 text-amber-900/80">
                 <MapPin size={16} className="text-amber-800 shrink-0" />
-                <span>{patient.address}</span>
+                <span>{patient.city}</span>
               </div>
               <div className="flex items-center space-x-3 text-amber-900/80">
                 <Calendar size={16} className="text-amber-800 shrink-0" />
-                <span>Registered: {patient.createdAt}</span>
+                <span>Registered: {patient.lastVisit}</span>
               </div>
             </div>
           </div>
@@ -117,11 +117,11 @@ const StudentPatientDetails = () => {
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-white/60 p-3 rounded-xl border border-amber-900/10">
                 <span className="text-xs text-amber-800/60 block">Agni (Digestive Fire)</span>
-                <span className="font-bold text-amber-950 text-sm">{patient.agni || 'Vishamagni'}</span>
+                <span className="font-bold text-amber-950 text-sm">Vishamagni</span>
               </div>
               <div className="bg-white/60 p-3 rounded-xl border border-amber-900/10">
                 <span className="text-xs text-amber-800/60 block">Koshtha (Bowel Type)</span>
-                <span className="font-bold text-amber-950 text-sm">{patient.koshtha || 'Krura'}</span>
+                <span className="font-bold text-amber-950 text-sm">Krura</span>
               </div>
               <div className="bg-white/60 p-3 rounded-xl border border-amber-900/10">
                 <span className="text-xs text-amber-800/60 block">Bala (Strength)</span>
@@ -140,7 +140,7 @@ const StudentPatientDetails = () => {
           <div className="bg-[#fbf7ee]/80 border border-amber-900/15 rounded-2xl p-6 shadow-sm">
             <h3 className="text-lg font-serif font-bold text-amber-950 mb-3">Chief Clinical Presentation</h3>
             <div className="bg-amber-800/10 border border-amber-900/15 rounded-xl p-4 text-amber-950 font-medium text-sm leading-relaxed">
-              "{patient.primaryComplaint}"
+              "{patient.chiefComplaint}"
             </div>
 
             <h4 className="text-sm font-bold text-amber-950 mt-6 mb-2">Medical History & Lifestyle Notes</h4>
