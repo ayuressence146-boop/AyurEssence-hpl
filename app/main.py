@@ -42,15 +42,16 @@ app.add_exception_handler(APIException, api_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 
-# Include API Routers
-app.include_router(auth_router, prefix=settings.API_V1_STR)
-app.include_router(patients_router, prefix=settings.API_V1_STR)
-app.include_router(questionnaires_router, prefix=settings.API_V1_STR)
-app.include_router(assessments_router, prefix=settings.API_V1_STR)
-app.include_router(recommendations_router)
-app.include_router(reminders_router)
-app.include_router(reports_router)
-app.include_router(educational_router)
+# Include API Routers with /api/v1 and /api prefixes
+for prefix in [settings.API_V1_STR, "/api"]:
+    app.include_router(auth_router, prefix=prefix)
+    app.include_router(patients_router, prefix=prefix)
+    app.include_router(questionnaires_router, prefix=prefix)
+    app.include_router(assessments_router, prefix=prefix)
+    app.include_router(recommendations_router, prefix=prefix)
+    app.include_router(reminders_router, prefix=prefix)
+    app.include_router(reports_router, prefix=prefix)
+    app.include_router(educational_router, prefix=prefix)
 
 @app.get("/health", tags=["Health Check"])
 def health_check():
@@ -63,9 +64,9 @@ def health_check():
 from fastapi.staticfiles import StaticFiles
 import os
 
-frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
-if os.path.exists(frontend_path):
-    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+frontend_dist = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
+if os.path.exists(frontend_dist):
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
 
 if __name__ == "__main__":
     import uvicorn
