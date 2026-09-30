@@ -11,6 +11,9 @@ const PatientList = () => {
 
   useEffect(() => {
     setPatients(dataStore.getPatients());
+    dataStore.fetchPatientsLive().then(res => {
+      setPatients(res);
+    });
   }, []);
 
   const filteredPatients = patients.filter(p => {

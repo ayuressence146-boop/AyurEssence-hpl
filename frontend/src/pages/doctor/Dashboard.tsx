@@ -10,13 +10,16 @@ const DoctorDashboard = () => {
 
   useEffect(() => {
     setPatients(dataStore.getPatients());
+    dataStore.fetchPatientsLive().then(res => {
+      setPatients(res);
+    });
   }, []);
 
   const stats = [
-    { label: 'Total Registered Patients', value: patients.length.toString(), icon: Users, badge: '+3 this week' },
-    { label: 'Active Prakriti Assessments', value: '8', icon: Activity, badge: 'In Progress' },
-    { label: 'Pending Review & Approval', value: '4', icon: Clock, badge: 'Needs Sign-off' },
-    { label: 'Finalized Clinical Reports', value: '38', icon: CheckCircle, badge: 'Verified' },
+    { label: 'Total Registered Patients', value: patients.length.toString(), icon: Users, badge: 'Live DB' },
+    { label: 'Active Prakriti Assessments', value: '0', icon: Activity, badge: 'In Progress' },
+    { label: 'Pending Review & Approval', value: '0', icon: Clock, badge: 'Needs Sign-off' },
+    { label: 'Finalized Clinical Reports', value: '0', icon: CheckCircle, badge: 'Verified' },
   ];
 
   return (
@@ -107,32 +110,40 @@ const DoctorDashboard = () => {
           </div>
 
           <div className="space-y-3 flex-1">
-            {patients.slice(0, 4).map((p) => (
-              <div 
-                key={p.id}
-                onClick={() => navigate(`/doctor/patients/${p.id}`)}
-                className="flex items-center justify-between p-3.5 bg-white/70 hover:bg-white rounded-2xl border border-[#2b2721]/10 hover:border-[#2b2721]/30 transition-all cursor-pointer shadow-sm group"
-              >
-                <div className="flex items-center space-x-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-[#2b2721] text-[#ece7dc] flex items-center justify-center font-serif font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">
-                    {p.name.charAt(0)}
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-[#2b2721] group-hover:underline">{p.name}</h4>
-                    <p className="text-xs text-[#2b2721]/65">
-                      ID: <span className="font-mono font-semibold">{p.id}</span> · {p.age} yrs · {p.gender}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-[#2b2721]/10 text-[#2b2721] border border-[#2b2721]/15">
-                    {p.prakriti}
-                  </span>
-                  <p className="text-[10px] text-[#2b2721]/50 mt-0.5">Last visit: {p.lastVisit}</p>
-                </div>
+            {patients.length === 0 ? (
+              <div className="p-8 text-center text-[#2b2721]/60 bg-white/40 border border-[#2b2721]/10 rounded-2xl">
+                <Users size={32} className="mx-auto mb-2 text-[#2b2721]/40" />
+                <p className="font-bold text-xs">No registered patients in Supabase database yet.</p>
+                <p className="text-[11px] text-[#2b2721]/50 mt-0.5">Click "Add New Patient" above to create a profile in Supabase.</p>
               </div>
-            ))}
+            ) : (
+              patients.slice(0, 4).map((p) => (
+                <div 
+                  key={p.id}
+                  onClick={() => navigate(`/doctor/patients/${p.id}`)}
+                  className="flex items-center justify-between p-3.5 bg-white/70 hover:bg-white rounded-2xl border border-[#2b2721]/10 hover:border-[#2b2721]/30 transition-all cursor-pointer shadow-sm group"
+                >
+                  <div className="flex items-center space-x-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-[#2b2721] text-[#ece7dc] flex items-center justify-center font-serif font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">
+                      {p.name.charAt(0)}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-[#2b2721] group-hover:underline">{p.name}</h4>
+                      <p className="text-xs text-[#2b2721]/65">
+                        ID: <span className="font-mono font-semibold">{p.id}</span> · {p.age} yrs · {p.gender}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-[#2b2721]/10 text-[#2b2721] border border-[#2b2721]/15">
+                      {p.prakriti}
+                    </span>
+                    <p className="text-[10px] text-[#2b2721]/50 mt-0.5">Last visit: {p.lastVisit}</p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
