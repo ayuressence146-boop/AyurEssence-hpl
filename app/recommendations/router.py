@@ -6,7 +6,7 @@ from app.database.models import Profile
 from app.recommendations.schemas import RecommendationResponse, RecommendationApproveRequest
 from app.recommendations.service import RecommendationService
 
-router = APIRouter(prefix="/api/recommendations", tags=["Recommendations"])
+router = APIRouter(prefix="/recommendations", tags=["Recommendations"])
 
 @router.post("/assessment/{assessment_id}/draft", response_model=RecommendationResponse, status_code=status.HTTP_201_CREATED)
 def generate_draft(assessment_id: str, db: Session = Depends(get_db), current_user: Profile = Depends(get_current_user)):

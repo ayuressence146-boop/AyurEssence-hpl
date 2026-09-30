@@ -7,7 +7,7 @@ from app.database.models import Profile
 from app.reports.schemas import ReportCreateRequest, ReportShareRequest, ReportDetailResponse, ReportShareResponse
 from app.reports.service import ReportService
 
-router = APIRouter(prefix="/api/reports", tags=["Reports"])
+router = APIRouter(prefix="/reports", tags=["Reports"])
 
 @router.post("/assessment/{assessment_id}", response_model=ReportDetailResponse, status_code=status.HTTP_201_CREATED)
 def generate_report(assessment_id: str, req: ReportCreateRequest, db: Session = Depends(get_db), current_user: Profile = Depends(get_current_user)):

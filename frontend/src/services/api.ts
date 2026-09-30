@@ -164,7 +164,16 @@ export interface ReminderModel {
 // Auth Service
 // ----------------------------------------------------------------------
 export const authService = {
-  async register(data: { email: string; password: string; full_name: string; role: string }): Promise<AuthResponse> {
+  async register(data: { 
+    email: string; 
+    password: string; 
+    full_name: string; 
+    role: string; 
+    phone?: string; 
+    gender?: string; 
+    date_of_birth?: string; 
+    address?: string; 
+  }): Promise<AuthResponse> {
     try {
       const response = await apiClient.post<AuthResponse>('/auth/register', data);
       if (response.data && response.data.access_token) {

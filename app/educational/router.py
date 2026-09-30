@@ -6,7 +6,7 @@ from app.database.models import Profile
 from app.educational.schemas import MentorFeedbackCreateRequest, MentorFeedbackResponse, StudentAnalyticsResponse, InterpretationComparisonResponse
 from app.educational.service import EducationalService
 
-router = APIRouter(prefix="/api/educational", tags=["Educational Platform"])
+router = APIRouter(prefix="/educational", tags=["Educational Platform"])
 
 @router.post("/feedback", response_model=MentorFeedbackResponse, status_code=status.HTTP_201_CREATED)
 def leave_mentor_feedback(req: MentorFeedbackCreateRequest, db: Session = Depends(get_db), current_user: Profile = Depends(get_current_user)):

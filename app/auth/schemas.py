@@ -9,6 +9,9 @@ class UserRegisterRequest(BaseModel):
     full_name: str = Field(..., min_length=2, max_length=150)
     role: str = Field(..., description="Role: doctor, student, or patient")
     phone: Optional[str] = None
+    gender: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    address: Optional[str] = None
 
 class UserLoginRequest(BaseModel):
     email: EmailStr

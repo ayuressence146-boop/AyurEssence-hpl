@@ -7,7 +7,7 @@ from app.database.models import Profile
 from app.reminders.schemas import FollowupReminderCreateRequest, FollowupReminderUpdateRequest, FollowupReminderResponse
 from app.reminders.service import ReminderService
 
-router = APIRouter(prefix="/api/reminders", tags=["Reminders"])
+router = APIRouter(prefix="/reminders", tags=["Reminders"])
 
 @router.post("", response_model=FollowupReminderResponse, status_code=status.HTTP_201_CREATED)
 def create_reminder(req: FollowupReminderCreateRequest, db: Session = Depends(get_db), current_user: Profile = Depends(get_current_user)):

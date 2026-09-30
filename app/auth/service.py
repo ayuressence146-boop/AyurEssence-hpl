@@ -48,6 +48,15 @@ class AuthService:
         # If registered as a patient, automatically create a Patient record linked to this profile
         if role == "patient":
             existing_patient = db.query(Patient).filter(Patient.email == email_clean).first()
+            
+            dob_val = None
+            if req.date_of_birth:
+                try:
+                    from datetime import datetime
+                    dob_val = datetime.strptime(req.date_of_birth, "%Y-%m-%d").date()
+                except Exception:
+                    dob_val = None
+
             if not existing_patient:
                 patient_rec = Patient(
                     id=user_id,  # maintain 1:1 ID alignment for patient profile
@@ -55,9 +64,17 @@ class AuthService:
                     full_name=req.full_name,
                     email=email_clean,
                     phone=req.phone,
+                    gender=req.gender,
+                    date_of_birth=dob_val,
+                    address=req.address,
                     is_active=True
                 )
                 db.add(patient_rec)
+            else:
+                if req.gender: existing_patient.gender = req.gender
+                if dob_val: existing_patient.date_of_birth = dob_val
+                if req.address: existing_patient.address = req.address
+                if req.phone: existing_patient.phone = req.phone
 
         db.commit()
         db.refresh(profile)
