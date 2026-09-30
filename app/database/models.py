@@ -142,7 +142,7 @@ class Assessment(Base):
     id = Column(String(36), primary_key=True, default=generate_uuid)
     patient_id = Column(String(36), ForeignKey("patients.id", ondelete="CASCADE"), nullable=False)
     conducted_by = Column(String(36), ForeignKey("profiles.id", ondelete="SET NULL"), nullable=True)
-    assigned_to = Column(String(36), ForeignKey("profiles.id", ondelete="SET NULL"), nullable=True)  # student assigned by doctor
+    assigned_to = Column(String(36), nullable=True)  # student profile UUID assigned by doctor (no FK to avoid UUID/VARCHAR type conflict in PG)
     questionnaire_id = Column(String(36), ForeignKey("questionnaires.id", ondelete="RESTRICT"), nullable=False)
     status = Column(String(20), default="draft")  # draft, in_progress, submitted, reviewed, finalized
     started_at = Column(DateTime(timezone=True), default=utc_now)
@@ -154,7 +154,6 @@ class Assessment(Base):
     # Relationships
     patient = relationship("Patient", back_populates="assessments")
     conductor = relationship("Profile", back_populates="assessments", foreign_keys=[conducted_by])
-    assigned_student = relationship("Profile", foreign_keys=[assigned_to])
     questionnaire = relationship("Questionnaire")
     responses = relationship("Response", back_populates="assessment", cascade="all, delete-orphan")
     observations = relationship("Observation", back_populates="assessment", cascade="all, delete-orphan")

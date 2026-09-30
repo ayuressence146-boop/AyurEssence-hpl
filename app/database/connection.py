@@ -42,11 +42,14 @@ def init_db():
             pass
         
         # Migration: add assigned_to column to assessments (student assignment by doctor)
+        # NOTE: profiles.id is UUID in PostgreSQL, so assigned_to must also be UUID.
+        # We skip the FK REFERENCES constraint here to avoid VARCHAR/UUID type mismatch;
+        # referential integrity is enforced at the application service layer.
         try:
             if "sqlite" in db_url:
-                conn.execute(text("ALTER TABLE assessments ADD COLUMN assigned_to VARCHAR(36) REFERENCES profiles(id);"))
+                conn.execute(text("ALTER TABLE assessments ADD COLUMN assigned_to VARCHAR(36);"))
             else:
-                conn.execute(text("ALTER TABLE assessments ADD COLUMN IF NOT EXISTS assigned_to VARCHAR(36) REFERENCES profiles(id) ON DELETE SET NULL;"))
+                conn.execute(text("ALTER TABLE assessments ADD COLUMN IF NOT EXISTS assigned_to UUID;"))
         except Exception:
             pass
 
