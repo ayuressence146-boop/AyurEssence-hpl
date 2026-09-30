@@ -1,0 +1,48 @@
+# ── Python ──────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+ENV/
+
+# ── Dev / Test ───────────────────────────────────────────────
+tests/
+*.test.py
+migrate_assigned_to.py
+
+# ── Secrets & Local Config ───────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Frontend (built separately) ──────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/Dockerfile
+
+# ── Database files ───────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+ayurbase.db
+
+# ── IDE / OS ─────────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.git/
+.gitignore
+
+# ── Docs / non-runtime ───────────────────────────────────────
+*.md
+*.postman_collection.json
+*.prd.md
+*.trd.md
+frontend-old/
+scripts/
