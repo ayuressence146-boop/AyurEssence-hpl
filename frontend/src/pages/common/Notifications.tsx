@@ -1,24 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, CheckCheck, Clock, FileText, User, AlertCircle, Sparkles, Filter } from 'lucide-react';
-import { getNotifications, markNotificationRead, type NotificationItem } from '../../services/dataStore';
-
+import { dataStore, type NotificationItem } from '../../services/dataStore';
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [filterType, setFilterType] = useState<string>('All');
 
   useEffect(() => {
-    setNotifications(getNotifications());
+    setNotifications(dataStore.getNotifications());
   }, []);
 
   const handleMarkAllRead = () => {
-    notifications.forEach(n => markNotificationRead(n.id));
-    setNotifications(getNotifications());
+    notifications.forEach(n => dataStore.markNotificationRead(n.id));
+    setNotifications(dataStore.getNotifications());
   };
 
   const handleReadSingle = (id: string) => {
-    markNotificationRead(id);
-    setNotifications(getNotifications());
+    dataStore.markNotificationRead(id);
+    setNotifications(dataStore.getNotifications());
   };
 
   const filtered = notifications.filter(n => {
@@ -43,13 +42,15 @@ const Notifications = () => {
           </p>
         </div>
 
-        <button
-          onClick={handleMarkAllRead}
-          className="px-4 py-2 bg-amber-800/10 hover:bg-amber-800/20 text-amber-900 border border-amber-900/20 rounded-xl font-medium text-xs transition-colors flex items-center space-x-1.5"
-        >
-          <CheckCheck size={16} />
-          <span>Mark All as Read</span>
-        </button>
+        {notifications.length > 0 && (
+          <button
+            onClick={handleMarkAllRead}
+            className="px-4 py-2 bg-amber-800/10 hover:bg-amber-800/20 text-amber-900 border border-amber-900/20 rounded-xl font-medium text-xs transition-colors flex items-center space-x-1.5"
+          >
+            <CheckCheck size={16} />
+            <span>Mark All as Read</span>
+          </button>
+        )}
       </div>
 
       {/* Filter Tabs */}
@@ -118,4 +119,3 @@ const Notifications = () => {
 };
 
 export default Notifications;
-

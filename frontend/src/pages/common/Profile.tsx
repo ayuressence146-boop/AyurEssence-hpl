@@ -1,17 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, Award, Save, CheckCircle2, Camera, Shield, BookOpen } from 'lucide-react';
+import { authService, type UserProfile } from '../../services/api';
 
 const Profile = () => {
+  const storedUser = authService.getStoredUser();
   const [user, setUser] = useState({
-    name: 'Dr. Ananya Rao',
-    email: 'ananya.rao@ayuressence.org',
-    role: 'Senior Ayurvedic Practitioner',
-    phone: '+91 98765 43210',
+    name: storedUser?.full_name || 'Practitioner User',
+    email: storedUser?.email || 'doctor@ayuressence.org',
+    role: storedUser?.role ? `${storedUser.role.toUpperCase()} PORTAL` : 'Senior Ayurvedic Practitioner',
+    phone: storedUser?.phone || '+91 98765 43210',
     location: 'AyurEssence Wellness Center, Bengaluru',
-    registrationNumber: 'AYU-KA-2018-9402',
+    registrationNumber: 'AYU-KA-2026-9402',
     specialization: 'Kayachikitsa & Nadi Pariksha Specialist',
-    bio: 'Senior Vaidya with over 12 years of clinical experience in Prakriti assessment, Panchakarma therapy design, and integrative lifestyle medicine.',
+    bio: 'Clinical practitioner experience in Prakriti assessment, Panchakarma therapy design, and integrative lifestyle medicine.',
   });
+
+  useEffect(() => {
+    authService.getMe().then(me => {
+      if (me) {
+        setUser(prev => ({
+          ...prev,
+          name: me.full_name || prev.name,
+          email: me.email || prev.email,
+          phone: me.phone || prev.phone,
+          role: me.role ? `${me.role.toUpperCase()} PORTAL` : prev.role
+        }));
+      }
+    }).catch(() => {});
+  }, []);
 
   const [isSaved, setIsSaved] = useState(false);
 
