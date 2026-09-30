@@ -19,6 +19,8 @@ class Profile(Base):
     full_name = Column(String(150), nullable=False)
     role = Column(String(20), nullable=False)  # doctor, student, patient
     phone = Column(String(20), nullable=True)
+    email = Column(String(255), nullable=True)
+    password_hash = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=utc_now)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)

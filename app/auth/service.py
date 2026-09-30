@@ -18,16 +18,17 @@ class AuthService:
         if role not in ["doctor", "student", "patient"]:
             raise BadRequestException("Role must be 'doctor', 'student', or 'patient'")
 
-        # Check existing email
+        # Check existing email in DB or memory store
         email_clean = req.email.lower().strip()
-        if email_clean in AUTH_USER_CREDENTIALS:
+        existing_profile = db.query(Profile).filter(Profile.email == email_clean).first()
+        if existing_profile or email_clean in AUTH_USER_CREDENTIALS:
             raise ConflictException("User with this email already exists")
 
         # Generate unique user ID
         user_id = str(uuid.uuid4())
         hashed_pw = get_password_hash(req.password)
 
-        # Store credentials
+        # Store credentials in memory cache
         AUTH_USER_CREDENTIALS[email_clean] = {
             "id": user_id,
             "email": email_clean,
@@ -35,12 +36,14 @@ class AuthService:
             "role": role
         }
 
-        # Create Profile
+        # Create Profile in database with email & password_hash
         profile = Profile(
             id=user_id,
             full_name=req.full_name,
             role=role,
             phone=req.phone,
+            email=email_clean,
+            password_hash=hashed_pw,
             is_active=True
         )
         db.add(profile)
@@ -97,28 +100,59 @@ class AuthService:
     def login_user(db: Session, req: UserLoginRequest):
         email_clean = req.email.lower().strip()
         user_cred = AUTH_USER_CREDENTIALS.get(email_clean)
+        profile = None
+
+        # 1. Search database if credentials not in memory cache
+        if not user_cred:
+            profile = db.query(Profile).filter(Profile.email == email_clean, Profile.is_active == True).first()
+            if profile:
+                if profile.password_hash:
+                    user_cred = {
+                        "id": str(profile.id),
+                        "email": email_clean,
+                        "password_hash": str(profile.password_hash),
+                        "role": str(profile.role)
+                    }
+                else:
+                    # Update missing password hash for existing profile
+                    hashed_pw = get_password_hash(req.password)
+                    profile.password_hash = hashed_pw
+                    db.commit()
+                    user_cred = {
+                        "id": str(profile.id),
+                        "email": email_clean,
+                        "password_hash": hashed_pw,
+                        "role": str(profile.role)
+                    }
+                AUTH_USER_CREDENTIALS[email_clean] = user_cred
+
+        # 2. Demo fallback for standard testing accounts
+        if not user_cred:
+            if email_clean in ["doctor@ayur.com", "student@ayur.com", "patient@ayur.com", "test@example.com", "doctor@test.com", "student@test.com", "patient@test.com"]:
+                target_role = "doctor" if "doctor" in email_clean else ("student" if "student" in email_clean else "patient")
+                profile = db.query(Profile).filter(Profile.role == target_role, Profile.is_active == True).first()
+                if not profile:
+                    profile = db.query(Profile).filter(Profile.is_active == True).first()
+                if profile:
+                    hashed_pw = get_password_hash(req.password)
+                    user_cred = {
+                        "id": str(profile.id),
+                        "email": email_clean,
+                        "password_hash": hashed_pw,
+                        "role": str(profile.role)
+                    }
+                    AUTH_USER_CREDENTIALS[email_clean] = user_cred
 
         if not user_cred:
-            # Check if user profile exists in seeded database
-            profile = db.query(Profile).filter(Profile.is_active == True).first()
-            if profile and email_clean in ["doctor@ayur.com", "student@ayur.com", "patient@ayur.com", "test@example.com"]:
-                # Seed mock user credentials dynamically for demonstration
-                user_id = str(profile.id)
-                user_cred = {
-                    "id": user_id,
-                    "email": email_clean,
-                    "password_hash": get_password_hash(req.password),
-                    "role": str(profile.role)
-                }
-                AUTH_USER_CREDENTIALS[email_clean] = user_cred
-            else:
-                raise UnauthenticatedException("Invalid email or password")
+            raise UnauthenticatedException("Invalid email or password")
 
         if not verify_password(req.password, user_cred["password_hash"]):
             raise UnauthenticatedException("Invalid email or password")
 
         user_id = user_cred["id"]
-        profile = db.query(Profile).filter(Profile.id == user_id).first()
+        if not profile:
+            profile = db.query(Profile).filter(Profile.id == user_id).first()
+
         if not profile or not profile.is_active:
             raise UnauthenticatedException("User profile is inactive or deleted")
 
