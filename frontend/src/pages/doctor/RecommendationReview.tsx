@@ -59,8 +59,8 @@ const RecommendationReview = () => {
   const handleApprove = () => {
     const updated = dataStore.saveAssessment({
       id: assessment?.id || id,
-      patientId: assessment?.patientId || 'AE-2041',
-      patientName: assessment?.patientName || 'Ananya Sharma',
+      patientId: assessment?.patientId || 'P-001',
+      patientName: assessment?.patientName || 'Patient',
       status: 'Reviewed',
       recommendations: {
         dietFavor,
@@ -86,7 +86,7 @@ const RecommendationReview = () => {
           <span>Back to Prakriti Result</span>
         </Link>
         <span className="text-xs font-mono font-bold text-[#2b2721]/70 bg-white/70 px-3 py-1 rounded-full border border-[#2b2721]/15">
-          Review for: {assessment?.patientName || 'Ananya Sharma'}
+          Review for: {assessment?.patientName || 'Patient'}
         </span>
       </div>
 

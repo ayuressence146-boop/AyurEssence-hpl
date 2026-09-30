@@ -61,7 +61,7 @@ const DoctorComparison = () => {
             Doctor vs. Student Diagnostic Comparison
           </h1>
           <p className="text-amber-900/70 text-sm mt-0.5">
-            Compare your Prakriti & Vikriti findings directly against Senior Vaidya Dr. Ananya Rao.
+            Compare your Prakriti & Vikriti findings directly against Senior Vaidya recommendations.
           </p>
         </div>
 
@@ -85,7 +85,7 @@ const DoctorComparison = () => {
             </div>
             <div>
               <h3 className="font-serif font-bold text-amber-950 text-base">Your Assessment (Student)</h3>
-              <p className="text-xs text-amber-900/60">Submitted for Case AE-1001</p>
+              <p className="text-xs text-amber-900/60">Submitted Patient Case</p>
             </div>
           </div>
 
@@ -133,7 +133,7 @@ const DoctorComparison = () => {
             </div>
             <div>
               <h3 className="font-serif font-bold text-amber-950 text-base">Senior Vaidya Assessment</h3>
-              <p className="text-xs text-amber-900/60">Dr. Ananya Rao (MD Ayurveda)</p>
+              <p className="text-xs text-amber-900/60">Senior Clinical Faculty (MD Ayurveda)</p>
             </div>
           </div>
 

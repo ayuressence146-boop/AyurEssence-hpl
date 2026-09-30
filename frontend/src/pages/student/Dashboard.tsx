@@ -1,45 +1,29 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, FileText, CheckCircle, BarChart3, ArrowRight, BookOpen, Sparkles, Award } from 'lucide-react';
-import { getPatients, getAssessments, type Patient, type Assessment } from '../../services/dataStore';
+import { Users, FileText, CheckCircle, BarChart3, ArrowRight, BookOpen, Sparkles, Award, Loader2 } from 'lucide-react';
+import { patientService, authService, type PatientModel } from '../../services/api';
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const currentUser = authService.getStoredUser();
+  const [patients, setPatients] = useState<PatientModel[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setPatients(getPatients());
-    setAssessments(getAssessments());
+    const fetchData = async () => {
+      try {
+        const data = await patientService.listPatients();
+        setPatients(data);
+      } catch (err) {
+        console.warn('Failed to fetch patients:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, []);
 
-  const pendingAssessments = assessments.filter(a => a.status === 'Draft' || a.status === 'In Progress');
-  const completedAssessments = assessments.filter(a => a.status === 'Completed');
-
-  const mentorFeedbacks = [
-    {
-      id: 1,
-      patientName: 'Aarav Sharma',
-      patientCode: 'AE-1001',
-      mentor: 'Dr. Ananya Rao',
-      time: '2 hours ago',
-      type: 'correction',
-      title: 'Observation Correction on Skin Examination',
-      content: 'For Aarav Sharma, you noted Kapha dominance in skin texture, but the patient presented with severe dryness indicating Vata imbalance. Please review Charaka Samhita, Vimanasthana Ch 8.',
-      score: '85%'
-    },
-    {
-      id: 2,
-      patientName: 'Priya Patel',
-      patientCode: 'AE-1002',
-      mentor: 'Dr. Rajesh Vaidya',
-      time: '1 day ago',
-      type: 'praise',
-      title: 'Spot-on Prakriti Diagnostics',
-      content: 'Excellent Pitta-Vata assessment for Priya Patel. Your correlation of dietary habits with the presented symptoms was well reasoned and clinically accurate.',
-      score: '96%'
-    }
-  ];
+  const mentorFeedbacks: any[] = []; // Loaded dynamically from API — empty until real feedback exists
 
   return (
     <div className="space-y-6">
@@ -89,7 +73,7 @@ const StudentDashboard = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-amber-800/60">Completed Cases</p>
-              <h3 className="text-2xl font-serif font-bold text-amber-950 mt-1">{completedAssessments.length || 3}</h3>
+              <h3 className="text-2xl font-serif font-bold text-amber-950 mt-1">{0}</h3>
             </div>
             <div className="w-10 h-10 rounded-xl bg-emerald-800/10 flex items-center justify-center text-emerald-800">
               <CheckCircle size={20} />
@@ -104,7 +88,7 @@ const StudentDashboard = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-amber-800/60">Diagnostic Match</p>
-              <h3 className="text-2xl font-serif font-bold text-amber-950 mt-1">91%</h3>
+              <h3 className="text-2xl font-serif font-bold text-amber-950 mt-1">N/A</h3>
             </div>
             <div className="w-10 h-10 rounded-xl bg-purple-800/10 flex items-center justify-center text-purple-800">
               <BarChart3 size={20} />
@@ -120,7 +104,7 @@ const StudentDashboard = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-amber-800/60">Pending Reviews</p>
-              <h3 className="text-2xl font-serif font-bold text-amber-950 mt-1">{pendingAssessments.length || 2}</h3>
+              <h3 className="text-2xl font-serif font-bold text-amber-950 mt-1">{0}</h3>
             </div>
             <div className="w-10 h-10 rounded-xl bg-amber-600/10 flex items-center justify-center text-amber-800">
               <FileText size={20} />
@@ -158,17 +142,17 @@ const StudentDashboard = () => {
                 >
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 rounded-full bg-amber-800/10 border border-amber-900/15 flex items-center justify-center font-serif font-bold text-amber-900">
-                      {p.name.charAt(0)}
+                      {(p.full_name || p.name || 'P').charAt(0)}
                     </div>
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="font-bold text-amber-950 text-sm">{p.name}</span>
+                        <span className="font-bold text-amber-950 text-sm">{p.full_name || p.name}</span>
                         <span className="text-xs px-2 py-0.5 rounded-full bg-amber-800/10 text-amber-900 font-mono">
                           {p.patientId}
                         </span>
                       </div>
                       <p className="text-xs text-amber-800/70 mt-0.5">
-                        {p.age} yrs • {p.gender} • Chief Complaint: {p.primaryComplaint}
+                        {p.age ? `${p.age} yrs` : 'Age N/A'} • {p.gender || 'N/A'} {p.primaryComplaint ? `• ${p.primaryComplaint}` : '• Prakriti: Pending'}
                       </p>
                     </div>
                   </div>

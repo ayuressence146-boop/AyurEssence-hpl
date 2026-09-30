@@ -90,7 +90,7 @@ const ReportPreview = () => {
               VERIFIED CLINICAL RECORD
             </span>
             <p className="text-xs font-mono font-bold text-[#2b2721] mt-2">Cert ID: {assessment?.id || id}</p>
-            <p className="text-[11px] text-[#2b2721]/60">Date: {assessment?.date || '2026-09-28'}</p>
+            <p className="text-[11px] text-[#2b2721]/60">Date: {assessment?.date || 'Recent'}</p>
           </div>
         </div>
 
@@ -98,12 +98,12 @@ const ReportPreview = () => {
         <div className="p-5 bg-white/70 rounded-2xl border border-[#2b2721]/15 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
           <div>
             <span className="text-[10px] uppercase font-bold text-[#2b2721]/50 block">Patient Name</span>
-            <p className="font-bold text-[#2b2721]">{patient?.name || assessment?.patientName || 'Ananya Sharma'}</p>
+            <p className="font-bold text-[#2b2721]">{patient?.name || assessment?.patientName || 'Patient'}</p>
           </div>
 
           <div>
             <span className="text-[10px] uppercase font-bold text-[#2b2721]/50 block">ID & Demographics</span>
-            <p className="font-bold text-[#2b2721]">{patient?.id || 'AE-2041'} · {patient?.age || 34} yrs, {patient?.gender || 'Female'}</p>
+            <p className="font-bold text-[#2b2721]">{patient?.id || 'P-001'} · {patient?.age ? `${patient.age} yrs` : 'Age N/A'}, {patient?.gender || 'N/A'}</p>
           </div>
 
           <div>

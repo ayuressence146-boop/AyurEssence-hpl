@@ -150,7 +150,7 @@ const StudentPatientDetails = () => {
 
             <h4 className="text-sm font-bold text-amber-950 mt-6 mb-2">Student Learning Instructions</h4>
             <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-800/20 text-xs text-purple-950 leading-relaxed">
-              <span className="font-bold block mb-1">Assigned by Dr. Ananya Rao:</span>
+              <span className="font-bold block mb-1">Faculty Guidance Instructions:</span>
               "Please focus on Sparshanam (pulse & skin moisture evaluation). Check if the Vata imbalance is primary or secondary to Pitta turnover in the Gastro-Intestinal tract."
             </div>
           </div>

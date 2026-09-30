@@ -5,6 +5,7 @@ from app.database.connection import get_db
 from app.database.models import Profile
 from app.core.dependencies import get_current_user
 from app.patients.schemas import PatientCreateRequest, PatientUpdateRequest, PatientResponse
+from app.assessments.schemas import AssessmentDetailResponse
 from app.patients.service import PatientService
 
 router = APIRouter(prefix="/patients", tags=["Patient Management"])
@@ -44,6 +45,15 @@ def update_patient(
 ):
     """Update patient information (Doctor or Student owner)."""
     return PatientService.update_patient(db, patient_id, req, current_user)
+
+@router.get("/{patient_id}/assessments", response_model=List[AssessmentDetailResponse])
+def get_patient_assessments(
+    patient_id: str,
+    db: Session = Depends(get_db),
+    current_user: Profile = Depends(get_current_user)
+):
+    """Retrieve all assessments for a patient (sorted newest first)."""
+    return PatientService.get_patient_assessments(db, patient_id, current_user)
 
 @router.get("/{patient_id}/timeline")
 def get_patient_timeline(

@@ -12,12 +12,17 @@ class QuestionnaireService:
 
     @staticmethod
     def get_questionnaire_by_id(db: Session, questionnaire_id: str) -> Questionnaire:
+        if questionnaire_id in ["default", "latest", "active"]:
+            q = db.query(Questionnaire).filter(Questionnaire.is_active == True).first()
+            if q:
+                return q
+
         try:
             uuid.UUID(questionnaire_id)
+            q = db.query(Questionnaire).filter(Questionnaire.id == questionnaire_id).first()
         except ValueError:
-            raise BadRequestException(f"Invalid questionnaire UUID format: {questionnaire_id}")
+            q = db.query(Questionnaire).filter(Questionnaire.is_active == True).first()
 
-        q = db.query(Questionnaire).filter(Questionnaire.id == questionnaire_id).first()
         if not q:
             raise NotFoundException(f"Questionnaire with ID '{questionnaire_id}' not found")
         return q

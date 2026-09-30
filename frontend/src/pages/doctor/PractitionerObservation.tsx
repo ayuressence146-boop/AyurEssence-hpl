@@ -33,8 +33,8 @@ const PractitionerObservation = () => {
   const handleSave = () => {
     const updated = dataStore.saveAssessment({
       id: assessment?.id || id,
-      patientId: assessment?.patientId || 'AE-2041',
-      patientName: assessment?.patientName || 'Ananya Sharma',
+      patientId: assessment?.patientId || 'P-001',
+      patientName: assessment?.patientName || 'Patient',
       status: 'Reviewed',
       observation: {
         nadiGati,
@@ -62,7 +62,7 @@ const PractitionerObservation = () => {
           <span>Back to Questionnaire</span>
         </Link>
         <span className="text-xs font-mono font-bold text-[#2b2721]/70 bg-white/70 px-3 py-1 rounded-full border border-[#2b2721]/15">
-          Patient: {assessment?.patientName || 'Ananya Sharma'}
+          Patient: {assessment?.patientName || 'Patient'}
         </span>
       </div>
 

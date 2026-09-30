@@ -1,60 +1,125 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BookOpen, CheckCircle, ArrowRight, User, Stethoscope, Sparkles, AlertCircle } from 'lucide-react';
-import { getPatients, saveAssessment, type Patient } from '../../services/dataStore';
+import { BookOpen, CheckCircle, ArrowRight, User, Stethoscope, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
+import { dataStore } from '../../services/dataStore';
+import { patientService, questionnaireService, type QuestionModel, type PatientModel } from '../../services/api';
 
 const StudentAssessment = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const preSelectedPatientId = searchParams.get('patientId');
 
-  const [patients, setPatients] = useState<Patient[]>([]);
+  const [patients, setPatients] = useState<PatientModel[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState<string>(preSelectedPatientId || '');
+  const [questions, setQuestions] = useState<QuestionModel[]>([]);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [step, setStep] = useState<number>(1);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // Assessment State
-  const [vataScore, setVataScore] = useState(40);
-  const [pittaScore, setPittaScore] = useState(35);
-  const [kaphaScore, setKaphaScore] = useState(25);
+  // Astavidha & Clinical Observations State
   const [nadiType, setNadiType] = useState('Sarpa (Snake / Vata)');
   const [jihvaType, setJihvaType] = useState('Sama (Coated / Agni Mandya)');
   const [twakType, setTwakType] = useState('Ruksha (Dry / Rough)');
   const [studentNotes, setStudentNotes] = useState('');
 
   useEffect(() => {
-    const list = getPatients();
-    setPatients(list);
-    if (!selectedPatientId && list.length > 0) {
-      setSelectedPatientId(list[0].id);
-    }
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        // 1. Fetch live patient list
+        const pList = await patientService.listPatients();
+        setPatients(pList);
+        if (!selectedPatientId && pList.length > 0) {
+          setSelectedPatientId(pList[0].id);
+        }
+
+        // 2. Fetch questions from database table
+        const qData = await questionnaireService.getQuestionnaire('default');
+        if (qData && qData.questions && qData.questions.length > 0) {
+          setQuestions(qData.questions);
+        }
+      } catch (err) {
+        console.warn('Failed to load questionnaire from database:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, [preSelectedPatientId]);
 
+  // Calculate live Dosha scores based on selected database option scores
+  const calculateScores = () => {
+    let vataSum = 0;
+    let pittaSum = 0;
+    let kaphaSum = 0;
+
+    questions.forEach(q => {
+      const selectedOptionId = answers[q.id];
+      if (selectedOptionId && q.options) {
+        const opt = q.options.find(o => o.id === selectedOptionId);
+        if (opt) {
+          vataSum += Number(opt.vata_score || 0);
+          pittaSum += Number(opt.pitta_score || 0);
+          kaphaSum += Number(opt.kapha_score || 0);
+        }
+      }
+    });
+
+    const total = vataSum + pittaSum + kaphaSum;
+    if (total === 0) {
+      return { vata: 40, pitta: 35, kapha: 25, dominant: 'Vata-Pitta' };
+    }
+
+    const vataPct = Math.round((vataSum / total) * 100);
+    const pittaPct = Math.round((pittaSum / total) * 100);
+    const kaphaPct = 100 - (vataPct + pittaPct);
+
+    let dominant = 'Vata-Pitta';
+    if (vataPct >= pittaPct && vataPct >= kaphaPct) {
+      dominant = pittaPct >= kaphaPct ? 'Vata-Pitta' : 'Vata-Kapha';
+    } else if (pittaPct >= vataPct && pittaPct >= kaphaPct) {
+      dominant = vataPct >= kaphaPct ? 'Pitta-Vata' : 'Pitta-Kapha';
+    } else {
+      dominant = vataPct >= pittaPct ? 'Kapha-Vata' : 'Kapha-Pitta';
+    }
+
+    return { vata: vataPct, pitta: pittaPct, kapha: kaphaPct, dominant };
+  };
+
   const selectedPatient = patients.find(p => p.id === selectedPatientId) || patients[0];
+  const scores = calculateScores();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPatient) return;
 
-    const newAsm = {
-      id: `asm-${Date.now()}`,
+    const newAsm = dataStore.saveAssessment({
       patientId: selectedPatient.id,
-      patientName: selectedPatient.name,
-      evaluatorRole: 'student' as const,
-      evaluatorName: 'Student Evaluator',
-      date: new Date().toISOString().split('T')[0],
-      status: 'In Progress' as const,
-      responses: {},
-      calculatedScores: {
-        vata: vataScore,
-        pitta: pittaScore,
-        kapha: kaphaScore,
-        dominant: vataScore > pittaScore && vataScore > kaphaScore ? 'Vata-Pitta' : 'Pitta-Kapha'
+      patientName: selectedPatient.full_name || selectedPatient.name || 'Patient',
+      evaluatorRole: 'student',
+      evaluatorName: 'Student Scholar',
+      status: 'Submitted',
+      calculatedScores: scores,
+      observation: {
+        nadiGati: nadiType,
+        jihva: jihvaType,
+        twak: twakType,
+        notes: studentNotes
       }
-    };
+    });
 
-    saveAssessment(newAsm);
     navigate(`/student/assessments/${newAsm.id}/interpretation`);
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-3">
+        <Loader2 className="w-8 h-8 text-amber-800 animate-spin" />
+        <p className="text-sm font-medium text-amber-900/70">Loading official Ayurvedic questions from database...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -64,13 +129,13 @@ const StudentAssessment = () => {
           <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-800/10 text-amber-900 border border-amber-800/20">
             Clinical Training Module
           </span>
-          <span className="text-xs text-amber-800/60 font-medium">Trividha & Astavidha Pariksha</span>
+          <span className="text-xs text-amber-800/60 font-medium">Trividha &amp; Astavidha Pariksha</span>
         </div>
         <h1 className="text-2xl md:text-3xl font-serif font-bold text-amber-950 mt-1">
-          Student Prakriti & Vikriti Assessment
+          Student Prakriti &amp; Vikriti Assessment
         </h1>
         <p className="text-amber-900/70 text-sm mt-0.5">
-          Record physical observations, pulse diagnosis (Nadi), and patient questionnaire responses.
+          Record physical observations, pulse diagnosis (Nadi), and official database questionnaire responses.
         </p>
       </div>
 
@@ -93,7 +158,7 @@ const StudentAssessment = () => {
             }`}>
               2
             </span>
-            <span className="text-xs font-medium text-amber-950">Clinical Observation</span>
+            <span className="text-xs font-medium text-amber-950">Database Questionnaire</span>
           </div>
           <div className="h-0.5 w-12 bg-amber-900/10" />
           <div className="flex items-center space-x-2">
@@ -102,7 +167,7 @@ const StudentAssessment = () => {
             }`}>
               3
             </span>
-            <span className="text-xs font-medium text-amber-950">Interpretation</span>
+            <span className="text-xs font-medium text-amber-950">Clinical Signals &amp; Notes</span>
           </div>
         </div>
 
@@ -122,8 +187,8 @@ const StudentAssessment = () => {
                   }`}
                 >
                   <div>
-                    <p className="font-bold text-amber-950 text-sm">{p.name}</p>
-                    <p className="text-xs text-amber-900/70">{p.id} • {p.age} yrs • {p.gender}</p>
+                    <p className="font-bold text-amber-950 text-sm">{p.full_name || p.name}</p>
+                    <p className="text-xs text-amber-900/70">{p.patientId || p.id.substring(0, 8)} • {p.age ? `${p.age} yrs` : 'Age N/A'} • {p.gender || 'N/A'}</p>
                   </div>
                   {selectedPatientId === p.id && <CheckCircle size={18} className="text-amber-800" />}
                 </div>
@@ -134,17 +199,91 @@ const StudentAssessment = () => {
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="px-5 py-2.5 bg-amber-800 hover:bg-amber-900 text-amber-50 rounded-xl font-medium text-sm transition-all shadow-md flex items-center space-x-2"
+                disabled={patients.length === 0}
+                className="px-5 py-2.5 bg-amber-800 hover:bg-amber-900 disabled:opacity-50 text-amber-50 rounded-xl font-medium text-sm transition-all shadow-md flex items-center space-x-2"
               >
-                <span>Proceed to Clinical Observation</span>
+                <span>Proceed to Questionnaire</span>
                 <ArrowRight size={16} />
               </button>
             </div>
           </div>
         )}
 
-        {/* Step 2: Clinical Observation */}
+        {/* Step 2: Database Questions */}
         {step === 2 && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center border-b border-amber-900/10 pb-3">
+              <div>
+                <h3 className="text-lg font-serif font-bold text-amber-950">Database Questions</h3>
+                <p className="text-xs text-amber-900/70">Official Ayurvedic questions fetched directly from the database table.</p>
+              </div>
+              <div className="text-xs font-mono font-bold px-3 py-1 bg-amber-800/10 rounded-full text-amber-900">
+                Vata: {scores.vata}% | Pitta: {scores.pitta}% | Kapha: {scores.kapha}%
+              </div>
+            </div>
+
+            {questions.length === 0 ? (
+              <div className="py-8 text-center text-xs text-amber-900/70 space-y-1">
+                <p className="font-bold text-sm">No questionnaire questions found in database.</p>
+                <p>Please check backend API initialization.</p>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {questions.map((q, idx) => (
+                  <div key={q.id} className="p-4 bg-white/70 rounded-xl border border-amber-900/15 space-y-3">
+                    <p className="font-serif font-bold text-amber-950 text-sm">
+                      {idx + 1}. {q.question_text}
+                    </p>
+
+                    <div className="space-y-2">
+                      {q.options?.map((opt) => (
+                        <label
+                          key={opt.id}
+                          className={`flex items-start space-x-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                            answers[q.id] === opt.id
+                              ? 'bg-amber-800/15 border-amber-800 ring-1 ring-amber-800/20'
+                              : 'bg-white/50 border-amber-900/10 hover:bg-white'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name={`question_${q.id}`}
+                            value={opt.id}
+                            checked={answers[q.id] === opt.id}
+                            onChange={() => setAnswers({ ...answers, [q.id]: opt.id })}
+                            className="mt-0.5 accent-amber-800"
+                          />
+                          <span className="text-xs text-amber-950 font-medium">{opt.option_text}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex justify-between pt-4">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="px-4 py-2 border border-amber-900/20 text-xs font-medium text-amber-900 rounded-xl"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep(3)}
+                className="px-5 py-2.5 bg-amber-800 hover:bg-amber-900 text-amber-50 rounded-xl font-medium text-sm transition-all shadow-md flex items-center space-x-2"
+              >
+                <span>Proceed to Astavidha Signals</span>
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Astavidha Signals & Diagnostic Reasoning */}
+        {step === 3 && (
           <div className="space-y-6">
             <h3 className="text-lg font-serif font-bold text-amber-950">Astavidha Pariksha (8 Clinical Signals)</h3>
             
@@ -170,7 +309,7 @@ const StudentAssessment = () => {
                   className="w-full px-3 py-2 bg-white/70 border border-amber-900/20 rounded-xl text-sm text-amber-950 focus:ring-2 focus:ring-amber-800/30"
                 >
                   <option value="Sama (Coated / Agni Mandya)">Sama (Thick Coating / Ama Present)</option>
-                  <option value="Nirama (Clean)">Nirama (Pink & Clean)</option>
+                  <option value="Nirama (Clean)">Nirama (Pink &amp; Clean)</option>
                   <option value="Rakta (Red / Pitta)">Rakta (Red / Inflamed)</option>
                 </select>
               </div>
@@ -189,91 +328,16 @@ const StudentAssessment = () => {
               </div>
             </div>
 
-            {/* Dosha Scores Input sliders */}
-            <div className="space-y-4 pt-2">
-              <h4 className="text-sm font-bold text-amber-950">Estimated Dosha Ratio (%)</h4>
-              
-              <div>
-                <div className="flex justify-between text-xs font-semibold text-amber-900 mb-1">
-                  <span>Vata Prakriti Score</span>
-                  <span>{vataScore}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={vataScore}
-                  onChange={(e) => setVataScore(Number(e.target.value))}
-                  className="w-full accent-amber-800"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs font-semibold text-amber-900 mb-1">
-                  <span>Pitta Prakriti Score</span>
-                  <span>{pittaScore}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={pittaScore}
-                  onChange={(e) => setPittaScore(Number(e.target.value))}
-                  className="w-full accent-amber-800"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs font-semibold text-amber-900 mb-1">
-                  <span>Kapha Prakriti Score</span>
-                  <span>{kaphaScore}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={kaphaScore}
-                  onChange={(e) => setKaphaScore(Number(e.target.value))}
-                  className="w-full accent-amber-800"
-                />
-              </div>
+            <div className="space-y-2">
+              <h4 className="text-sm font-bold text-amber-950">Student Diagnostic Notes</h4>
+              <textarea
+                rows={4}
+                value={studentNotes}
+                onChange={(e) => setStudentNotes(e.target.value)}
+                placeholder="Explain why you assigned these Dosha ratios based on classical Ayurvedic references..."
+                className="w-full p-4 bg-white/70 border border-amber-900/20 rounded-xl text-sm text-amber-950 focus:ring-2 focus:ring-amber-800/30"
+              />
             </div>
-
-            <div className="flex justify-between pt-4">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="px-4 py-2 border border-amber-900/20 text-xs font-medium text-amber-900 rounded-xl"
-              >
-                Back
-              </button>
-              <button
-                type="button"
-                onClick={() => setStep(3)}
-                className="px-5 py-2.5 bg-amber-800 hover:bg-amber-900 text-amber-50 rounded-xl font-medium text-sm transition-all shadow-md flex items-center space-x-2"
-              >
-                <span>Proceed to Diagnostic Notes</span>
-                <ArrowRight size={16} />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: Diagnostic Reasoning & Submit */}
-        {step === 3 && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-serif font-bold text-amber-950">Student Diagnostic Notes</h3>
-            <p className="text-xs text-amber-900/70">
-              Explain why you assigned these Dosha ratios based on classical Ayurvedic references.
-            </p>
-
-            <textarea
-              rows={5}
-              value={studentNotes}
-              onChange={(e) => setStudentNotes(e.target.value)}
-              placeholder="e.g. Patient exhibits Sarpa Nadi with dryness in skin indicating Vata aggravation. Digestion shows Agni Mandya with Sama Jihva..."
-              className="w-full p-4 bg-white/70 border border-amber-900/20 rounded-xl text-sm text-amber-950 focus:ring-2 focus:ring-amber-800/30"
-            />
 
             <div className="flex justify-between pt-4">
               <button
@@ -299,4 +363,3 @@ const StudentAssessment = () => {
 };
 
 export default StudentAssessment;
-

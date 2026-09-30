@@ -1,7 +1,7 @@
 import uuid
 from typing import List
 from sqlalchemy.orm import Session
-from app.database.models import Patient, Profile
+from app.database.models import Patient, Profile, Assessment
 from app.patients.schemas import PatientCreateRequest, PatientUpdateRequest
 from app.core.exceptions import NotFoundException, UnauthorizedException, BadRequestException
 
@@ -85,6 +85,15 @@ class PatientService:
         db.commit()
         db.refresh(patient)
         return patient
+
+    @staticmethod
+    def get_patient_assessments(db: Session, patient_id: str, current_user: Profile) -> List[Assessment]:
+        """List all assessments for a patient, sorted newest first."""
+        patient = PatientService.get_patient_by_id(db, patient_id, current_user)
+        assessments = db.query(Assessment).filter(
+            Assessment.patient_id == str(patient.id)
+        ).order_by(Assessment.created_at.desc()).all()
+        return assessments
 
     @staticmethod
     def get_patient_timeline(db: Session, patient_id: str, current_user: Profile) -> List[dict]:

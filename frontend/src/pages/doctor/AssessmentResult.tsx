@@ -51,7 +51,7 @@ const DoctorAssessmentResult = () => {
           
           <h1 className="text-3xl font-serif font-bold text-[#2b2721]">{scores.dominant} Prakriti</h1>
           <p className="text-xs text-[#2b2721]/75 font-medium">
-            Patient: <span className="font-bold">{assessment?.patientName || 'Ananya Sharma'}</span> · Evaluation Date: {assessment?.date || '2026-09-28'}
+            Patient: <span className="font-bold">{assessment?.patientName || 'Patient'}</span> · Evaluation Date: {assessment?.date || 'Recent'}
           </p>
         </div>
 

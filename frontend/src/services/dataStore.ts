@@ -13,22 +13,24 @@ import type { PatientModel } from './api';
 export interface PatientRecord {
   id: string;
   name: string;
-  age: number;
-  gender: 'Male' | 'Female' | 'Other';
+  age?: number;
+  gender?: string;
   phone: string;
   email: string;
   city: string;
   prakriti: string;
-  primaryDosha: 'Vata' | 'Pitta' | 'Kapha' | 'Vata-Pitta' | 'Pitta-Kapha' | 'Kapha-Vata' | 'Tridoshaj';
+  primaryDosha: string;
   vataScore: number;
   pittaScore: number;
   kaphaScore: number;
-  status: 'Active' | 'Under Assessment' | 'Report Issued' | 'Follow-up Scheduled';
+  status: string;
   lastVisit: string;
   assignedDoctor: string;
   assignedStudent?: string;
   chiefComplaint: string;
   medicalHistory: string;
+  patientId?: string;
+  primaryComplaint?: string;
 }
 
 export interface AssessmentRecord {
@@ -87,21 +89,6 @@ export interface NotificationRecord {
   link: string;
 }
 
-// Purge any old static mock data left in localStorage
-const purgeOldMockData = () => {
-  try {
-    const raw = localStorage.getItem('ayur_patients');
-    if (raw && (raw.includes('Ananya Sharma') || raw.includes('Rajesh Hegde') || raw.includes('AE-2041'))) {
-      localStorage.removeItem('ayur_patients');
-      localStorage.removeItem('ayur_assessments');
-      localStorage.removeItem('ayur_student_tasks');
-    }
-  } catch (e) {
-    // Ignore error
-  }
-};
-purgeOldMockData();
-
 // Live in-memory cache synced with backend API
 let cachedPatients: PatientRecord[] = [];
 let cachedAssessments: AssessmentRecord[] = [];
@@ -115,13 +102,13 @@ export const syncDatabaseData = async (): Promise<PatientRecord[]> => {
       cachedPatients = apiPatients.map(p => ({
         id: p.id,
         name: p.full_name || p.name || 'Patient User',
-        age: p.age || (p.date_of_birth ? new Date().getFullYear() - new Date(p.date_of_birth).getFullYear() : 30),
-        gender: (p.gender as any) || 'Female',
+        age: p.age || (p.date_of_birth ? new Date().getFullYear() - new Date(p.date_of_birth).getFullYear() : undefined),
+        gender: p.gender || undefined,
         phone: p.phone || 'N/A',
         email: p.email || 'N/A',
         city: p.address || 'Location Not Specified',
         prakriti: p.baseline_dominant_dosha || p.prakriti || 'Pending Evaluation',
-        primaryDosha: (p.baseline_dominant_dosha as any) || 'Tridoshaj',
+        primaryDosha: p.baseline_dominant_dosha || 'Pending',
         vataScore: p.vataScore || 0,
         pittaScore: p.pittaScore || 0,
         kaphaScore: p.kaphaScore || 0,
@@ -129,9 +116,10 @@ export const syncDatabaseData = async (): Promise<PatientRecord[]> => {
         lastVisit: p.created_at ? p.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
         assignedDoctor: 'Practitioner',
         chiefComplaint: p.primaryComplaint || 'General Prakriti evaluation',
-        medicalHistory: 'Logged in Supabase database'
+        medicalHistory: 'Logged in Supabase database',
+        patientId: p.patientId,
+        primaryComplaint: p.primaryComplaint,
       }));
-      localStorage.setItem('ayur_patients', JSON.stringify(cachedPatients));
     }
   } catch (err) {
     console.warn('Backend API connection in progress:', err);
@@ -144,15 +132,6 @@ syncDatabaseData();
 
 export const dataStore = {
   getPatients(): PatientRecord[] {
-    const raw = localStorage.getItem('ayur_patients');
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && !raw.includes('Ananya Sharma')) {
-          cachedPatients = parsed;
-        }
-      } catch (e) {}
-    }
     return cachedPatients;
   },
 
@@ -170,7 +149,7 @@ export const dataStore = {
       ...data,
       id: `PAT-${Date.now().toString().slice(-6)}`,
       prakriti: 'Assessment Pending',
-      primaryDosha: 'Tridoshaj',
+      primaryDosha: 'Pending',
       vataScore: 0,
       pittaScore: 0,
       kaphaScore: 0,
@@ -179,7 +158,6 @@ export const dataStore = {
     };
 
     patients.unshift(newPatient);
-    localStorage.setItem('ayur_patients', JSON.stringify(patients));
 
     // Persist to backend database / Supabase
     patientService.createPatient({
@@ -194,12 +172,6 @@ export const dataStore = {
   },
 
   getAssessments(): AssessmentRecord[] {
-    const raw = localStorage.getItem('ayur_assessments');
-    if (raw) {
-      try {
-        cachedAssessments = JSON.parse(raw);
-      } catch (e) {}
-    }
     return cachedAssessments;
   },
 
@@ -222,7 +194,7 @@ export const dataStore = {
       date: new Date().toISOString().split('T')[0],
       responses: data.responses || {},
       observation: data.observation,
-      calculatedScores: data.calculatedScores || { vata: 0, pitta: 0, kapha: 0, dominant: 'Tridoshaj' },
+      calculatedScores: data.calculatedScores || { vata: 0, pitta: 0, kapha: 0, dominant: 'Pending' },
       recommendations: data.recommendations
     };
 
@@ -232,26 +204,21 @@ export const dataStore = {
       assessments.unshift(updated);
     }
 
-    localStorage.setItem('ayur_assessments', JSON.stringify(assessments));
     return updated;
   },
 
   getStudentTasks(): StudentTaskRecord[] {
-    const raw = localStorage.getItem('ayur_student_tasks');
-    return raw ? JSON.parse(raw) : [];
+    return [];
   },
 
   getNotifications(): NotificationRecord[] {
-    const raw = localStorage.getItem('ayur_notifications');
-    return raw ? JSON.parse(raw) : cachedNotifications;
+    return cachedNotifications;
   },
 
   markNotificationRead(id: string) {
-    const notifs = this.getNotifications();
-    const target = notifs.find(n => n.id === id);
+    const target = cachedNotifications.find(n => n.id === id);
     if (target) {
       target.read = true;
-      localStorage.setItem('ayur_notifications', JSON.stringify(notifs));
     }
   }
 };

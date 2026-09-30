@@ -235,53 +235,44 @@ export const patientService = {
         ...p,
         name: p.full_name,
         patientId: p.id.startsWith('AE') ? p.id : `AE-${p.id.substring(0, 4).toUpperCase()}`,
-        age: p.date_of_birth ? new Date().getFullYear() - new Date(p.date_of_birth).getFullYear() : 34,
-        primaryComplaint: p.baseline_dominant_dosha ? `Prakriti: ${p.baseline_dominant_dosha}` : 'Routine Prakriti evaluation',
-        chiefComplaint: 'Digestive irregularity & stress',
+        age: p.date_of_birth ? new Date().getFullYear() - new Date(p.date_of_birth).getFullYear() : undefined,
+        primaryComplaint: p.baseline_dominant_dosha ? `Prakriti: ${p.baseline_dominant_dosha}` : undefined,
         status: p.is_active ? 'Active' : 'Archived',
-        lastVisit: p.created_at ? p.created_at.split('T')[0] : '2026-09-29',
-        prakriti: p.baseline_dominant_dosha || 'Vata-Pitta',
+        lastVisit: p.created_at ? p.created_at.split('T')[0] : undefined,
+        prakriti: p.baseline_dominant_dosha || undefined,
       }));
     } catch (err) {
-      console.warn('Backend patient list call failed, returning cached/fallback list:', err);
-      const fallback = localStorage.getItem('ayur_patients');
-      return fallback ? JSON.parse(fallback) : [];
+      console.warn('Backend patient list failed:', err);
+      return [];
     }
   },
 
   async getPatient(id: string): Promise<PatientModel> {
-    try {
-      const response = await apiClient.get<PatientModel>(`/patients/${id}`);
-      const p = response.data;
-      return {
-        ...p,
-        name: p.full_name,
-        patientId: p.id.startsWith('AE') ? p.id : `AE-${p.id.substring(0, 4).toUpperCase()}`,
-        age: p.date_of_birth ? new Date().getFullYear() - new Date(p.date_of_birth).getFullYear() : 34,
-        primaryComplaint: p.baseline_dominant_dosha ? `Prakriti: ${p.baseline_dominant_dosha}` : 'Routine Prakriti evaluation',
-        chiefComplaint: 'Digestive irregularity & stress',
-        status: 'Active',
-        lastVisit: p.created_at ? p.created_at.split('T')[0] : '2026-09-29',
-        prakriti: p.baseline_dominant_dosha || 'Vata-Pitta',
-      };
-    } catch (err) {
-      const fallback = localStorage.getItem('ayur_patients');
-      if (fallback) {
-        const list: PatientModel[] = JSON.parse(fallback);
-        const match = list.find(item => item.id === id);
-        if (match) return match;
-      }
-      throw err;
-    }
+    const response = await apiClient.get<PatientModel>(`/patients/${id}`);
+    const p = response.data;
+    return {
+      ...p,
+      name: p.full_name,
+      patientId: p.id.startsWith('AE') ? p.id : `AE-${p.id.substring(0, 4).toUpperCase()}`,
+      age: p.date_of_birth ? new Date().getFullYear() - new Date(p.date_of_birth).getFullYear() : undefined,
+      primaryComplaint: p.baseline_dominant_dosha ? `Prakriti: ${p.baseline_dominant_dosha}` : undefined,
+      status: p.is_active ? 'Active' : 'Archived',
+      lastVisit: p.created_at ? p.created_at.split('T')[0] : undefined,
+      prakriti: p.baseline_dominant_dosha || undefined,
+    };
   },
 
   async createPatient(data: { full_name: string; phone?: string; email?: string; gender?: string; date_of_birth?: string; address?: string }): Promise<PatientModel> {
+    const response = await apiClient.post<PatientModel>('/patients', data);
+    return response.data;
+  },
+
+  async getPatientAssessments(patientId: string): Promise<AssessmentModel[]> {
     try {
-      const response = await apiClient.post<PatientModel>('/patients', data);
+      const response = await apiClient.get<AssessmentModel[]>(`/patients/${patientId}/assessments`);
       return response.data;
     } catch (err) {
-      console.warn('Backend patient creation failed:', err);
-      throw err;
+      return [];
     }
   },
 
@@ -290,10 +281,7 @@ export const patientService = {
       const response = await apiClient.get(`/patients/${patientId}/timeline`);
       return response.data;
     } catch (err) {
-      return [
-        { date: '2026-09-29', event: 'Prakriti Assessment Conducted', status: 'Completed' },
-        { date: '2026-09-25', event: 'Initial Consultation & Vitals Logged', status: 'Completed' }
-      ];
+      return [];
     }
   }
 };

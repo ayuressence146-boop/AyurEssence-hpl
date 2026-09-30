@@ -1,12 +1,77 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Award, ArrowRight, FileText, Heart, Sparkles } from 'lucide-react';
-import { dataStore } from '../../services/dataStore';
+import { Award, ArrowRight, FileText, Heart, Sparkles, Loader2, Clock } from 'lucide-react';
+import { authService, patientService, type AssessmentModel } from '../../services/api';
 
 const PrakritiResult = () => {
   const navigate = useNavigate();
-  const assessment = dataStore.getAssessments()[0];
-  const scores = assessment?.calculatedScores || { vata: 48, pitta: 35, kapha: 17, dominant: 'Vata-Pitta' };
+  const currentUser = authService.getStoredUser();
+  const [loading, setLoading] = useState(true);
+  const [scores, setScores] = useState<{ vata: number; pitta: number; kapha: number; dominant: string } | null>(null);
+  const [assessmentStatus, setAssessmentStatus] = useState<string>('');
+
+  useEffect(() => {
+    const fetchResult = async () => {
+      if (!currentUser) return;
+      try {
+        const assessments = await patientService.getPatientAssessments(currentUser.id);
+        if (assessments.length > 0) {
+          const latest = assessments[0] as any;
+          setAssessmentStatus(latest.status || '');
+          const result = latest.results?.[0];
+          if (result) {
+            setScores({
+              vata: parseFloat(result.vata_percentage),
+              pitta: parseFloat(result.pitta_percentage),
+              kapha: parseFloat(result.kapha_percentage),
+              dominant: result.dominant_dosha
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to fetch result:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchResult();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-amber-800" />
+      </div>
+    );
+  }
+
+  if (!scores) {
+    return (
+      <div className="max-w-4xl mx-auto text-[#2b2721]">
+        <div className="bg-[#fcfaf4]/90 backdrop-blur-md p-10 rounded-[28px] border border-[#2b2721]/15 shadow-sm text-center space-y-4">
+          <div className="w-16 h-16 mx-auto rounded-full bg-amber-800/10 border border-amber-800/20 flex items-center justify-center">
+            <Clock size={28} className="text-amber-800" />
+          </div>
+          <h3 className="text-xl font-serif font-bold text-[#2b2721]">No Result Available</h3>
+          <p className="text-xs text-[#2b2721]/75 font-medium max-w-md mx-auto leading-relaxed">
+            Your Prakriti result will appear here after a student or doctor completes and calculates your assessment.
+          </p>
+          <Link to="/patient" className="inline-flex items-center space-x-2 text-xs font-bold text-amber-800 hover:underline">
+            <span>Back to Dashboard</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Dynamic descriptions per dosha
+  const doshaDescriptions: Record<string, { physical: string; mental: string }> = {
+    'Vata': { physical: 'Slender build, dry cool skin, quick active movements, irregular digestion.', mental: 'Creative, quick learner, multitasker, prone to anxiety and restlessness under stress.' },
+    'Pitta': { physical: 'Medium athletic build, warm flushed skin, strong sharp digestion, heat-sensitive.', mental: 'Focused, goal-driven, sharp intellect, prone to frustration and impatience under stress.' },
+    'Kapha': { physical: 'Broad solid build, smooth oily skin, slow steady metabolism, strong stamina.', mental: 'Calm, compassionate, steady, prone to lethargy and attachment under stress.' },
+  };
+  const primary = scores.dominant.split('-')[0];
+  const desc = doshaDescriptions[primary] || doshaDescriptions['Vata'];
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 text-[#2b2721]">
@@ -27,8 +92,13 @@ const PrakritiResult = () => {
           
           <h1 className="text-3.5xl font-serif font-bold text-[#2b2721]">{scores.dominant} Prakriti</h1>
           <p className="text-xs text-[#2b2721]/75 font-medium">
-            Your unique biological constitution combines <span className="font-bold">Air (Vata)</span> & <span className="font-bold">Fire (Pitta)</span> qualities.
+            Your unique biological constitution determined by practitioner assessment.
           </p>
+          {assessmentStatus && (
+            <span className="inline-block text-[10px] font-bold uppercase px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-900 border border-emerald-500/20">
+              {assessmentStatus === 'finalized' ? 'Doctor Verified' : `Status: ${assessmentStatus.replace('_', ' ')}`}
+            </span>
+          )}
         </div>
 
         {/* Dosha Breakdown Gauges */}
@@ -59,16 +129,12 @@ const PrakritiResult = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
           <div className="p-4 bg-white/80 rounded-2xl border border-[#2b2721]/10 space-y-1">
             <h4 className="font-bold text-[#2b2721]">Physical Attributes</h4>
-            <p className="text-[#2b2721]/80 leading-relaxed font-medium">
-              Slender to medium build, quick active movements, warm skin touch with sensitive digestion.
-            </p>
+            <p className="text-[#2b2721]/80 leading-relaxed font-medium">{desc.physical}</p>
           </div>
 
           <div className="p-4 bg-white/80 rounded-2xl border border-[#2b2721]/10 space-y-1">
             <h4 className="font-bold text-[#2b2721]">Mental Disposition</h4>
-            <p className="text-[#2b2721]/80 leading-relaxed font-medium">
-              Creative, quick learner, goal-driven focus, prone to restlessness under stress.
-            </p>
+            <p className="text-[#2b2721]/80 leading-relaxed font-medium">{desc.mental}</p>
           </div>
         </div>
       </div>

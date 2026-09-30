@@ -151,39 +151,12 @@ const DoctorDashboard = () => {
         <div className="bg-[#fcfaf4]/90 backdrop-blur-md rounded-[24px] border border-[#2b2721]/15 shadow-sm p-6 flex flex-col justify-between">
           <div>
             <h3 className="text-lg font-serif font-bold text-[#2b2721] mb-1">Pending Actions</h3>
-            <p className="text-xs text-[#2b2721]/60 mb-4">Task items requiring doctor review & approval</p>
+            <p className="text-xs text-[#2b2721]/60 mb-4">Task items requiring doctor review &amp; approval</p>
 
             <div className="space-y-3.5">
-              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-600/20 text-[#2b2721]">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800">Student Evaluation</span>
-                  <span className="text-[10px] text-[#2b2721]/60">2 hrs ago</span>
-                </div>
-                <h4 className="text-xs font-bold">Rahul Verma submitted evaluation for Ananya Sharma</h4>
-                <p className="text-[11px] text-[#2b2721]/70 mt-1">Accuracy match: 94.5%. Practitioner Nadi sign-off required.</p>
-                <Link 
-                  to="/doctor/assessments/ASM-1001/recommendation"
-                  className="mt-3 inline-flex items-center space-x-1.5 px-3 py-1.5 bg-[#2b2721] text-[#ece7dc] text-[11px] font-bold rounded-lg hover:bg-[#1a1714] transition-all shadow-sm"
-                >
-                  <span>Review & Approve</span>
-                  <ArrowRight size={12} />
-                </Link>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-600/20 text-[#2b2721]">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Report Ready</span>
-                  <span className="text-[10px] text-[#2b2721]/60">Today</span>
-                </div>
-                <h4 className="text-xs font-bold">Generate Certificate for Rajesh Hegde</h4>
-                <p className="text-[11px] text-[#2b2721]/70 mt-1">Pitta-Kapha assessment complete. Ready for signature.</p>
-                <Link 
-                  to="/doctor/reports/generate"
-                  className="mt-3 inline-flex items-center space-x-1.5 px-3 py-1.5 bg-[#2b2721] text-[#ece7dc] text-[11px] font-bold rounded-lg hover:bg-[#1a1714] transition-all shadow-sm"
-                >
-                  <span>Generate Report</span>
-                  <FileText size={12} />
-                </Link>
+              <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-600/20 text-[#2b2721] text-center space-y-2">
+                <p className="text-xs font-bold text-[#2b2721]">All Pending Reviews Clear</p>
+                <p className="text-[11px] text-[#2b2721]/70">No pending student evaluations or report signatures at this time.</p>
               </div>
             </div>
           </div>
