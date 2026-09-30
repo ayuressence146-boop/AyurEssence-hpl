@@ -6,9 +6,9 @@ import {
   assessmentService, 
   questionnaireService, 
   recommendationService, 
-  reminderService,
-  PatientModel 
+  reminderService
 } from './api';
+import type { PatientModel } from './api';
 
 export interface PatientRecord {
   id: string;
