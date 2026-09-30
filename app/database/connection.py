@@ -23,3 +23,10 @@ def get_db():
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+    with engine.begin() as conn:
+        from sqlalchemy import text
+        try:
+            conn.execute(text("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS email VARCHAR(255);"))
+            conn.execute(text("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);"))
+        except Exception as e:
+            print("Note on column migration:", e)
