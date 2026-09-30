@@ -41,8 +41,18 @@ def init_db():
         except Exception:
             pass
         
+        # Migration: add assigned_to column to assessments (student assignment by doctor)
+        try:
+            if "sqlite" in db_url:
+                conn.execute(text("ALTER TABLE assessments ADD COLUMN assigned_to VARCHAR(36) REFERENCES profiles(id);"))
+            else:
+                conn.execute(text("ALTER TABLE assessments ADD COLUMN IF NOT EXISTS assigned_to VARCHAR(36) REFERENCES profiles(id) ON DELETE SET NULL;"))
+        except Exception:
+            pass
+
         try:
             res = conn.execute(text("SELECT COUNT(*) FROM questionnaires;")).scalar()
+
             if res == 0:
                 import os
                 seed_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "supabase", "seed.sql")
