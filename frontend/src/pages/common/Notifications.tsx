@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, CheckCheck, Clock, FileText, User, AlertCircle, Sparkles, Filter } from 'lucide-react';
-import { getNotifications, markNotificationRead, NotificationItem } from '../../services/dataStore';
+import { getNotifications, markNotificationRead, type NotificationItem } from '../../services/dataStore';
+
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);

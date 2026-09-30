@@ -387,10 +387,17 @@ export const dataStore = {
 
 export type Patient = PatientRecord;
 export type Assessment = AssessmentRecord;
+export type NotificationItem = NotificationRecord;
+export interface NotificationItemInterface extends NotificationRecord {}
+export const NotificationItem = {};
+
 
 export const getPatients = () => dataStore.getPatients();
 export const getPatientById = (id: string) => dataStore.getPatientById(id);
 export const getAssessments = () => dataStore.getAssessments();
 export const getAssessmentById = (id: string) => dataStore.getAssessmentById(id);
 export const saveAssessment = (record: Partial<AssessmentRecord> & { id?: string; patientId: string; patientName?: string }) => dataStore.saveAssessment({ patientName: '', ...record });
+export const getNotifications = () => dataStore.getNotifications();
+export const markNotificationRead = (id: string) => dataStore.markNotificationRead(id);
+
 
