@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
@@ -22,3 +23,18 @@ def login(req: UserLoginRequest, db: Session = Depends(get_db)):
 def get_me(current_user: Profile = Depends(get_current_user)):
     """Retrieve profile of the currently authenticated user."""
     return current_user
+
+@router.get("/students", response_model=List[ProfileResponse])
+def list_students(
+    db: Session = Depends(get_db),
+    current_user: Profile = Depends(get_current_user)
+):
+    """Retrieve list of all active student profiles. Accessible by doctors only."""
+    if current_user.role != "doctor":
+        from app.core.exceptions import UnauthorizedException
+        raise UnauthorizedException("Only doctors can view the list of students")
+    students = db.query(Profile).filter(
+        Profile.role == "student",
+        Profile.is_active == True
+    ).order_by(Profile.full_name).all()
+    return students

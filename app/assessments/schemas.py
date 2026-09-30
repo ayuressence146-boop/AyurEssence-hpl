@@ -9,6 +9,7 @@ class AssessmentCreateRequest(BaseModel):
     patient_id: str
     questionnaire_id: str
     methodology_id: Optional[str] = None
+    assigned_to: Optional[str] = None  # student profile ID assigned by doctor
 
 class AssessmentStatusUpdateRequest(BaseModel):
     status: str = Field(..., description="Target status: draft, in_progress, submitted, reviewed, finalized")
@@ -42,6 +43,7 @@ class AssessmentDetailResponse(BaseModel):
     id: str
     patient_id: str
     conducted_by: Optional[str] = None
+    assigned_to: Optional[str] = None
     questionnaire_id: str
     methodology_id: Optional[str] = None
     status: str
@@ -56,7 +58,7 @@ class AssessmentDetailResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    @field_validator("id", "patient_id", "conducted_by", "questionnaire_id", "methodology_id", mode="before")
+    @field_validator("id", "patient_id", "conducted_by", "assigned_to", "questionnaire_id", "methodology_id", mode="before")
     def coerce_uuid_to_str(cls, v):
         if isinstance(v, uuid.UUID):
             return str(v)

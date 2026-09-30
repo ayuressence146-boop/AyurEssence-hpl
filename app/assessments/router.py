@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
@@ -13,13 +14,21 @@ from app.assessments.service import AssessmentService
 
 router = APIRouter(prefix="/assessments", tags=["Assessments & Workflow"])
 
+@router.get("/my-assigned", response_model=List[AssessmentDetailResponse])
+def get_my_assigned_assessments(
+    db: Session = Depends(get_db),
+    current_user: Profile = Depends(get_current_user)
+):
+    """Retrieve all assessments assigned to the currently logged-in student by a doctor."""
+    return AssessmentService.get_my_assigned_assessments(db, current_user)
+
 @router.post("", response_model=AssessmentDetailResponse, status_code=status.HTTP_201_CREATED)
 def create_assessment(
     req: AssessmentCreateRequest,
     db: Session = Depends(get_db),
     current_user: Profile = Depends(get_current_user)
 ):
-    """Initiate a new Prakriti Assessment in DRAFT status."""
+    """Initiate a new Prakriti Assessment in DRAFT status. Doctor can assign to a student via assigned_to."""
     return AssessmentService.create_assessment(db, req, current_user)
 
 @router.get("/{assessment_id}", response_model=AssessmentDetailResponse)

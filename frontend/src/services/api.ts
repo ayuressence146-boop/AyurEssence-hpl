@@ -160,6 +160,16 @@ export interface ReminderModel {
   created_at: string;
 }
 
+// Model for a student profile used in assignment dropdowns
+export interface StudentProfile {
+  id: string;
+  full_name: string;
+  role: string;
+  phone?: string;
+  is_active: boolean;
+  created_at: string;
+}
+
 // ----------------------------------------------------------------------
 // Auth Service
 // ----------------------------------------------------------------------
@@ -207,6 +217,16 @@ export const authService = {
       localStorage.setItem('ayur_user', JSON.stringify(response.data));
     }
     return response.data;
+  },
+
+  async listStudents(): Promise<StudentProfile[]> {
+    try {
+      const response = await apiClient.get<StudentProfile[]>('/auth/students');
+      return response.data;
+    } catch (err) {
+      console.warn('Failed to fetch students list:', err);
+      return [];
+    }
   },
 
   logout() {
@@ -313,13 +333,23 @@ export const questionnaireService = {
 // Assessments Service (Database connected)
 // ----------------------------------------------------------------------
 export const assessmentService = {
-  async createAssessment(data: { patient_id: string; questionnaire_id: string }): Promise<AssessmentModel> {
+  async createAssessment(data: { patient_id: string; questionnaire_id: string; assigned_to?: string }): Promise<AssessmentModel> {
     try {
       const response = await apiClient.post<AssessmentModel>('/assessments', data);
       return response.data;
     } catch (err) {
       console.warn('Backend create assessment failed:', err);
       throw err;
+    }
+  },
+
+  async getMyAssigned(): Promise<AssessmentModel[]> {
+    try {
+      const response = await apiClient.get<AssessmentModel[]>('/assessments/my-assigned');
+      return response.data;
+    } catch (err) {
+      console.warn('Failed to fetch assigned assessments:', err);
+      return [];
     }
   },
 

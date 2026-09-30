@@ -1,63 +1,87 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { HeartPulse, ArrowLeft, ArrowRight, CheckCircle2, Stethoscope, GraduationCap, Loader2 } from 'lucide-react';
-import { dataStore } from '../../services/dataStore';
-import { patientService, type PatientModel } from '../../services/api';
+import { HeartPulse, ArrowLeft, ArrowRight, CheckCircle2, Stethoscope, GraduationCap, Loader2, Users } from 'lucide-react';
+import { patientService, authService, assessmentService, questionnaireService, type PatientModel, type StudentProfile } from '../../services/api';
 
 const CreateAssessment = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialPatientId = searchParams.get('patientId') || '';
-  
+
   const [patients, setPatients] = useState<PatientModel[]>([]);
+  const [students, setStudents] = useState<StudentProfile[]>([]);
+  const [questionnaire, setQuestionnaire] = useState<{ id: string; name: string } | null>(null);
   const [selectedPatientId, setSelectedPatientId] = useState(initialPatientId);
+  const [selectedStudentId, setSelectedStudentId] = useState('');
   const [evaluatorType, setEvaluatorType] = useState<'doctor' | 'student'>('doctor');
   const [loading, setLoading] = useState<boolean>(true);
+  const [submitting, setSubmitting] = useState<boolean>(false);
   const [assignedSuccess, setAssignedSuccess] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadPatients = async () => {
+    const loadData = async () => {
       setLoading(true);
       try {
-        const list = await patientService.listPatients();
-        setPatients(list);
-        if (!initialPatientId && list.length > 0) {
-          setSelectedPatientId(list[0].id);
+        // Load patients (only real patients — filtered by backend RBAC)
+        const [patientList, studentList, qList] = await Promise.all([
+          patientService.listPatients(),
+          authService.listStudents(),
+          questionnaireService.listQuestionnaires(),
+        ]);
+
+        setPatients(patientList);
+        setStudents(studentList);
+
+        // Pick the first active questionnaire
+        const activeQ = qList.find(q => q.id) || qList[0];
+        if (activeQ) setQuestionnaire({ id: activeQ.id, name: activeQ.name });
+
+        if (!initialPatientId && patientList.length > 0) {
+          setSelectedPatientId(patientList[0].id);
+        }
+        if (studentList.length > 0) {
+          setSelectedStudentId(studentList[0].id);
         }
       } catch (err) {
-        console.warn('Failed to fetch patient list:', err);
+        console.warn('Failed to load data:', err);
       } finally {
         setLoading(false);
       }
     };
-
-    loadPatients();
+    loadData();
   }, [initialPatientId]);
 
-  const handleStart = () => {
+  const handleStart = async () => {
+    setError(null);
     const selectedPatient = patients.find(p => p.id === selectedPatientId);
-    if (!selectedPatient) return;
+    if (!selectedPatient) { setError('Please select a patient.'); return; }
+    if (!questionnaire) { setError('No active questionnaire found. Please contact admin.'); return; }
 
-    if (evaluatorType === 'doctor') {
-      // Practitioner Direct mode: Doctor conducts assessment now
-      const newAssessment = dataStore.saveAssessment({
-        patientId: selectedPatient.id,
-        patientName: selectedPatient.full_name || selectedPatient.name || 'Patient',
-        evaluatorRole: 'doctor',
-        evaluatorName: 'Attending Doctor',
-        status: 'In Progress'
-      });
-      navigate(`/doctor/assessments/${newAssessment.id}/questionnaire`);
-    } else {
-      // Supervised Scholar mode: Assign to Student Workspace
-      dataStore.saveAssessment({
-        patientId: selectedPatient.id,
-        patientName: selectedPatient.full_name || selectedPatient.name || 'Patient',
-        evaluatorRole: 'student',
-        evaluatorName: 'Assigned Student Scholar',
-        status: 'Assigned'
-      });
-      setAssignedSuccess(true);
+    setSubmitting(true);
+    try {
+      if (evaluatorType === 'doctor') {
+        // Doctor conducts assessment directly — create in backend, navigate to questionnaire
+        const asm = await assessmentService.createAssessment({
+          patient_id: selectedPatient.id,
+          questionnaire_id: questionnaire.id,
+        });
+        navigate(`/doctor/assessments/${asm.id}/questionnaire`);
+      } else {
+        // Assign to student — create assessment in backend with assigned_to
+        if (!selectedStudentId) { setError('Please select a student to assign this assessment to.'); setSubmitting(false); return; }
+        await assessmentService.createAssessment({
+          patient_id: selectedPatient.id,
+          questionnaire_id: questionnaire.id,
+          assigned_to: selectedStudentId,
+        });
+        setAssignedSuccess(true);
+      }
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail || err?.message || 'Failed to create assessment.';
+      setError(typeof detail === 'string' ? detail : JSON.stringify(detail));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -104,13 +128,15 @@ const CreateAssessment = () => {
         {assignedSuccess ? (
           <div className="p-6 bg-emerald-500/10 border border-emerald-800/20 rounded-2xl text-center space-y-3">
             <CheckCircle2 size={40} className="mx-auto text-emerald-800" />
-            <h3 className="text-lg font-serif font-bold text-[#2b2721]">Assessment Assigned to Student Workspace</h3>
+            <h3 className="text-lg font-serif font-bold text-[#2b2721]">Assessment Assigned to Student</h3>
             <p className="text-xs text-[#2b2721]/80 max-w-md mx-auto">
-              This case has been assigned to student scholars. Students can now view this patient case under their Student Portal to conduct clinical observations.
+              The case has been assigned to{' '}
+              <strong>{students.find(s => s.id === selectedStudentId)?.full_name || 'the student'}</strong>.
+              They can now view and conduct this assessment from their Student Portal dashboard.
             </p>
             <div className="pt-2 flex justify-center space-x-3">
               <button
-                onClick={() => setAssignedSuccess(false)}
+                onClick={() => { setAssignedSuccess(false); setError(null); }}
                 className="px-4 py-2 border border-[#2b2721]/20 rounded-xl text-xs font-bold text-[#2b2721] hover:bg-white/60 transition-all"
               >
                 Assign Another Patient
@@ -126,12 +152,31 @@ const CreateAssessment = () => {
           </div>
         ) : (
           <>
+            {/* Error */}
+            {error && (
+              <div className="p-3 bg-red-500/10 border border-red-600/20 rounded-xl text-xs text-red-800 font-medium">
+                {error}
+              </div>
+            )}
+
+            {/* Questionnaire Info */}
+            {questionnaire && (
+              <div className="p-3 bg-amber-500/10 border border-amber-700/20 rounded-xl text-xs text-[#2b2721] font-medium">
+                📋 Questionnaire: <strong>{questionnaire.name}</strong>
+              </div>
+            )}
+            {!questionnaire && (
+              <div className="p-3 bg-red-500/10 border border-red-600/20 rounded-xl text-xs text-red-800 font-medium">
+                ⚠️ No active questionnaire found. Please contact the administrator to seed questionnaire data.
+              </div>
+            )}
+
             {/* Patient Selection Dropdown */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-[#2b2721]/80 ml-1">Select Patient Profile</label>
               {patients.length === 0 ? (
                 <div className="p-3 bg-amber-500/10 border border-amber-600/20 rounded-xl text-xs text-[#2b2721]">
-                  No patients registered yet. Please add a patient first.
+                  No patients registered yet. <Link to="/doctor/patients/add" className="underline font-bold">Add a patient first.</Link>
                 </div>
               ) : (
                 <select
@@ -141,7 +186,7 @@ const CreateAssessment = () => {
                 >
                   {patients.map(p => (
                     <option key={p.id} value={p.id}>
-                      {p.full_name || p.name} ({p.patientId || p.id.substring(0, 8)}) — {p.age ? `${p.age} yrs` : 'Age N/A'}, {p.gender || 'N/A'} [{p.prakriti || 'Pending Evaluation'}]
+                      {p.full_name || p.name} — {p.age ? `${p.age} yrs` : 'Age N/A'}, {p.gender || 'N/A'} [{p.prakriti || 'Pending Evaluation'}]
                     </option>
                   ))}
                 </select>
@@ -184,15 +229,51 @@ const CreateAssessment = () => {
               </div>
             </div>
 
+            {/* Student Selection — only shown when Supervised Scholar mode */}
+            {evaluatorType === 'student' && (
+              <div className="space-y-2 animate-fade-in">
+                <label className="text-xs font-bold text-[#2b2721]/80 ml-1 flex items-center space-x-1.5">
+                  <Users size={13} />
+                  <span>Assign to Student Scholar</span>
+                </label>
+                {students.length === 0 ? (
+                  <div className="p-3 bg-amber-500/10 border border-amber-600/20 rounded-xl text-xs text-[#2b2721]">
+                    No student accounts registered yet. Students need to sign up with the "Student" role first.
+                  </div>
+                ) : (
+                  <select
+                    value={selectedStudentId}
+                    onChange={e => setSelectedStudentId(e.target.value)}
+                    className="w-full p-3 bg-white/80 border border-amber-700/40 rounded-xl text-xs text-[#2b2721] font-bold focus:outline-none focus:ring-2 focus:ring-amber-700/30"
+                  >
+                    {students.map(s => (
+                      <option key={s.id} value={s.id}>
+                        {s.full_name} {s.phone ? `— ${s.phone}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <p className="text-[10px] text-[#2b2721]/50 ml-1">
+                  The assessment will appear in the selected student's portal for them to conduct and submit.
+                </p>
+              </div>
+            )}
+
             <button 
               onClick={handleStart}
-              disabled={patients.length === 0}
+              disabled={patients.length === 0 || !questionnaire || submitting || (evaluatorType === 'student' && students.length === 0)}
               className="w-full mt-4 bg-[#2b2721] hover:bg-[#1a1714] disabled:opacity-50 text-[#ece7dc] py-3.5 rounded-full font-bold text-xs tracking-widest uppercase transition-all shadow-md shadow-[#2b2721]/20 flex items-center justify-center space-x-2"
             >
-              <span>
-                {evaluatorType === 'doctor' ? 'Begin Questionnaire & Observations' : 'Assign Assessment to Student Workspace'}
-              </span>
-              <ArrowRight size={14} />
+              {submitting ? (
+                <><Loader2 size={14} className="animate-spin" /><span>Processing...</span></>
+              ) : (
+                <>
+                  <span>
+                    {evaluatorType === 'doctor' ? 'Begin Questionnaire & Observations' : 'Assign Assessment to Student'}
+                  </span>
+                  <ArrowRight size={14} />
+                </>
+              )}
             </button>
           </>
         )}

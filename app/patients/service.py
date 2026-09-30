@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.database.models import Patient, Profile, Assessment
 from app.patients.schemas import PatientCreateRequest, PatientUpdateRequest
 from app.core.exceptions import NotFoundException, UnauthorizedException, BadRequestException
+from sqlalchemy import or_
 
 class PatientService:
 
@@ -33,13 +34,27 @@ class PatientService:
         query = db.query(Patient).filter(Patient.is_active == True)
         
         if current_user.role == "doctor":
+            # Doctors see only patients in the patients table (not student/doctor profile users)
             return query.all()
         elif current_user.role == "student":
-            return query.filter(Patient.created_by == current_user.id).all()
+            # Students see patients they created OR patients assigned to them via an assessment
+            assigned_patient_ids = (
+                db.query(Assessment.patient_id)
+                .filter(Assessment.assigned_to == current_user.id)
+                .subquery()
+            )
+            return query.filter(
+                or_(
+                    Patient.created_by == current_user.id,
+                    Patient.id.in_(assigned_patient_ids)
+                )
+            ).all()
         elif current_user.role == "patient":
             return query.filter(
-                (Patient.id == current_user.id) | 
-                (Patient.created_by == current_user.id)
+                or_(
+                    Patient.id == current_user.id,
+                    Patient.created_by == current_user.id
+                )
             ).all()
         return []
 
@@ -59,9 +74,16 @@ class PatientService:
         if current_user.role == "doctor":
             return patient
         elif current_user.role == "student":
-            if patient.created_by != current_user.id:
-                raise UnauthorizedException("Student does not have permission to view this patient")
-            return patient
+            # Allow if student created the patient OR is assigned an assessment for this patient
+            if patient.created_by == current_user.id:
+                return patient
+            assigned = db.query(Assessment).filter(
+                Assessment.patient_id == str(patient.id),
+                Assessment.assigned_to == str(current_user.id)
+            ).first()
+            if assigned:
+                return patient
+            raise UnauthorizedException("Student does not have permission to view this patient")
         elif current_user.role == "patient":
             if patient.id != current_user.id and patient.created_by != current_user.id:
                 raise UnauthorizedException("Patient can only view their own record")
@@ -88,12 +110,21 @@ class PatientService:
 
     @staticmethod
     def get_patient_assessments(db: Session, patient_id: str, current_user: Profile) -> List[Assessment]:
-        """List all assessments for a patient, sorted newest first."""
+        """List all assessments for a patient, sorted newest first.
+        Students only see assessments assigned to them for this patient.
+        Doctors see all assessments.
+        """
         patient = PatientService.get_patient_by_id(db, patient_id, current_user)
-        assessments = db.query(Assessment).filter(
-            Assessment.patient_id == str(patient.id)
-        ).order_by(Assessment.created_at.desc()).all()
-        return assessments
+        query = db.query(Assessment).filter(Assessment.patient_id == str(patient.id))
+        if current_user.role == "student":
+            # Student only sees their assigned assessments for this patient
+            query = query.filter(
+                or_(
+                    Assessment.assigned_to == str(current_user.id),
+                    Assessment.conducted_by == str(current_user.id)
+                )
+            )
+        return query.order_by(Assessment.created_at.desc()).all()
 
     @staticmethod
     def get_patient_timeline(db: Session, patient_id: str, current_user: Profile) -> List[dict]:

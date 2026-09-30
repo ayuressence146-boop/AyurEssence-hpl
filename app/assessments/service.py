@@ -75,10 +75,21 @@ class AssessmentService:
         if not questionnaire.is_active:
             raise BadRequestException("Questionnaire is inactive")
 
+        # Validate assigned_to if provided (must be a student profile)
+        assigned_to_str = None
+        if req.assigned_to:
+            assigned_profile = db.query(Profile).filter(Profile.id == str(req.assigned_to)).first()
+            if not assigned_profile:
+                raise NotFoundException(f"Assigned user with ID '{req.assigned_to}' not found")
+            if assigned_profile.role != "student":
+                raise BadRequestException("Assessments can only be assigned to users with the 'student' role")
+            assigned_to_str = str(assigned_profile.id)
+
         assessment = Assessment(
             id=str(uuid.uuid4()),
             patient_id=str(patient.id),
             conducted_by=str(current_user.id),
+            assigned_to=assigned_to_str,
             questionnaire_id=str(questionnaire.id),
             status="draft",
             started_at=datetime.now(timezone.utc)
@@ -87,6 +98,18 @@ class AssessmentService:
         db.commit()
         db.refresh(assessment)
         return assessment
+
+    @staticmethod
+    def get_my_assigned_assessments(db: Session, current_user: Profile) -> List[Assessment]:
+        """Return all assessments assigned to the current student (by a doctor)."""
+        if current_user.role != "student":
+            raise UnauthorizedException("Only students can view their assigned assessments")
+        return (
+            db.query(Assessment)
+            .filter(Assessment.assigned_to == str(current_user.id))
+            .order_by(Assessment.created_at.desc())
+            .all()
+        )
 
     @staticmethod
     def get_assessment_by_id(db: Session, assessment_id: str, current_user: Profile) -> Assessment:
