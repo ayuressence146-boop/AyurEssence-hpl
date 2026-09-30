@@ -1,16 +1,22 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from app.core.config import settings
 from app.database.models import Base
 
-# Database engine initialization
-connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
+def build_engine(url: str):
+    connect_args = {"check_same_thread": False} if url.startswith("sqlite") else {}
+    return create_engine(url, connect_args=connect_args, pool_pre_ping=True)
 
-engine = create_engine(
-    settings.DATABASE_URL,
-    connect_args=connect_args,
-    pool_pre_ping=True
-)
+db_url = settings.DATABASE_URL
+try:
+    engine = build_engine(db_url)
+    with engine.connect() as test_conn:
+        test_conn.execute(text("SELECT 1"))
+except Exception as conn_err:
+    print(f"[Database Connection Warning] Primary DB ({db_url}) unreachable: {conn_err}")
+    print("[Database Fallback] Switching to local SQLite database: sqlite:///./ayurbase.db")
+    db_url = "sqlite:///./ayurbase.db"
+    engine = build_engine(db_url)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -26,10 +32,14 @@ def init_db():
     with engine.begin() as conn:
         from sqlalchemy import text
         try:
-            conn.execute(text("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS email VARCHAR(255);"))
-            conn.execute(text("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);"))
-        except Exception as e:
-            print("Note on column migration:", e)
+            if "sqlite" in db_url:
+                conn.execute(text("ALTER TABLE profiles ADD COLUMN email VARCHAR(255);"))
+                conn.execute(text("ALTER TABLE profiles ADD COLUMN password_hash VARCHAR(255);"))
+            else:
+                conn.execute(text("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS email VARCHAR(255);"))
+                conn.execute(text("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);"))
+        except Exception:
+            pass
         
         try:
             res = conn.execute(text("SELECT COUNT(*) FROM questionnaires;")).scalar()
