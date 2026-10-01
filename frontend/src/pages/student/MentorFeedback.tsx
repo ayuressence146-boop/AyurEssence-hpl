@@ -64,7 +64,7 @@ const MentorFeedback = () => {
     };
     fetchFeedback();
 
-    const intervalId = setInterval(() => fetchFeedback(true), 5000);
+    const intervalId = setInterval(() => fetchFeedback(true), 15000);
     return () => clearInterval(intervalId);
   }, []);
 

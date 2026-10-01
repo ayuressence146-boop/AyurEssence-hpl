@@ -28,7 +28,7 @@ const PatientDashboard = () => {
     };
     fetchData();
 
-    const intervalId = setInterval(() => fetchData(true), 5000);
+    const intervalId = setInterval(() => fetchData(true), 15000);
     return () => clearInterval(intervalId);
   }, []);
 

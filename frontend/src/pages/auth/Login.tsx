@@ -28,11 +28,7 @@ const Login = () => {
       else if (role === 'student') navigate('/student');
       else navigate('/patient');
     } catch (err: any) {
-      const email = formData.username.toLowerCase();
-      if (email.includes('dr')) navigate('/doctor');
-      else if (email.includes('student')) navigate('/student');
-      else if (email.includes('patient')) navigate('/patient');
-      else setError(err.message || 'Invalid credentials. Please try again.');
+      setError(err.message || 'Invalid credentials. Please try again.');
       setLoading(false);
     }
   };

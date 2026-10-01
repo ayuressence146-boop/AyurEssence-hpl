@@ -67,7 +67,7 @@ const AssignedAssessments = () => {
     fetchData();
 
     // Real-time polling
-    const intervalId = setInterval(() => fetchData(true), 3000);
+    const intervalId = setInterval(() => fetchData(true), 15000);
     return () => clearInterval(intervalId);
   }, []);
 

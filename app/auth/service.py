@@ -131,14 +131,39 @@ class AuthService:
             if email_clean in ["doctor@ayur.com", "student@ayur.com", "patient@ayur.com", "test@example.com", "doctor@test.com", "student@test.com", "patient@test.com"]:
                 target_role = "doctor" if "doctor" in email_clean else ("student" if "student" in email_clean else "patient")
                 profile = db.query(Profile).filter(Profile.role == target_role, Profile.is_active == True).first()
+                
                 if not profile:
-                    profile = db.query(Profile).filter(Profile.is_active == True).first()
+                    # Auto-seed the demo profile so testing isn't blocked
+                    new_id = str(uuid.uuid4())
+                    hashed_pw = get_password_hash(req.password)
+                    profile = Profile(
+                        id=new_id,
+                        full_name=f"Demo {target_role.capitalize()}",
+                        role=target_role,
+                        email=email_clean,
+                        password_hash=hashed_pw,
+                        is_active=True
+                    )
+                    db.add(profile)
+                    
+                    if target_role == "patient":
+                        from app.database.models import Patient
+                        patient = Patient(
+                            id=new_id,
+                            full_name="Demo Patient",
+                            email=email_clean,
+                            is_active=True
+                        )
+                        db.add(patient)
+                    
+                    db.commit()
+
                 if profile:
                     hashed_pw = get_password_hash(req.password)
                     user_cred = {
                         "id": str(profile.id),
                         "email": email_clean,
-                        "password_hash": hashed_pw,
+                        "password_hash": str(profile.password_hash) if profile.password_hash else hashed_pw,
                         "role": str(profile.role)
                     }
                     AUTH_USER_CREDENTIALS[email_clean] = user_cred

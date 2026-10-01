@@ -236,8 +236,13 @@ export const authService = {
   },
 
   getStoredUser(): UserProfile | null {
-    const data = localStorage.getItem('ayur_user');
-    return data ? JSON.parse(data) : null;
+    try {
+      const data = localStorage.getItem('ayur_user');
+      return data ? JSON.parse(data) : null;
+    } catch (e) {
+      console.error("Failed to parse user from local storage", e);
+      return null;
+    }
   },
 
   getToken(): string | null {

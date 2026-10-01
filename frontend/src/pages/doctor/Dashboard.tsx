@@ -50,7 +50,7 @@ const DoctorDashboard = () => {
     };
     fetchData();
 
-    const intervalId = setInterval(() => fetchData(true), 5000);
+    const intervalId = setInterval(() => fetchData(true), 60000);
     return () => clearInterval(intervalId);
   }, []);
 
