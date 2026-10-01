@@ -8,6 +8,9 @@ def build_engine(url: str):
     return create_engine(url, connect_args=connect_args, pool_pre_ping=True)
 
 db_url = settings.DATABASE_URL
+if db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+
 try:
     engine = build_engine(db_url)
     with engine.connect() as test_conn:
