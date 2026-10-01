@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, BookOpen, Stethoscope, User, GraduationCap, Sparkles } from 'lucide-react';
+import { authService } from '../../services/api';
 
 const Landing = () => {
   const navigate = useNavigate();
   const [iframeLoaded, setIframeLoaded] = useState(false);
+
+  useEffect(() => {
+    const user = authService.getStoredUser();
+    if (user) {
+      navigate(`/${user.role}`, { replace: true });
+    }
+  }, [navigate]);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#ece7dc]">

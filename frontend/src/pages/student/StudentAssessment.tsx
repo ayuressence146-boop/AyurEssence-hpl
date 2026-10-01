@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BookOpen, CheckCircle, ArrowRight, User, Stethoscope, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
 import { dataStore } from '../../services/dataStore';
-import { patientService, questionnaireService, type QuestionModel, type PatientModel } from '../../services/api';
+import { patientService, questionnaireService, assessmentService, type QuestionModel, type PatientModel } from '../../services/api';
 
 const StudentAssessment = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const preSelectedPatientId = searchParams.get('patientId');
+  const preSelectedAssessmentId = searchParams.get('assessmentId');
 
   const [patients, setPatients] = useState<PatientModel[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState<string>(preSelectedPatientId || '');
@@ -90,26 +91,35 @@ const StudentAssessment = () => {
   const selectedPatient = patients.find(p => p.id === selectedPatientId) || patients[0];
   const scores = calculateScores();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPatient) return;
+    if (!selectedPatient || !preSelectedAssessmentId) return;
 
-    const newAsm = dataStore.saveAssessment({
-      patientId: selectedPatient.id,
-      patientName: selectedPatient.full_name || selectedPatient.name || 'Patient',
-      evaluatorRole: 'student',
-      evaluatorName: 'Student Scholar',
-      status: 'Submitted',
-      calculatedScores: scores,
-      observation: {
-        nadiGati: nadiType,
-        jihva: jihvaType,
-        twak: twakType,
-        notes: studentNotes
-      }
-    });
+    try {
+      // Submit all selected responses
+      const submitPromises = Object.entries(answers).map(([qId, optId]) => 
+        assessmentService.submitResponse(preSelectedAssessmentId, {
+          question_id: qId,
+          selected_option_id: optId
+        })
+      );
+      await Promise.all(submitPromises);
 
-    navigate(`/student/assessments/${newAsm.id}/interpretation`);
+      // Add student clinical observation
+      const obsText = `Nadi: ${nadiType}\nJihva: ${jihvaType}\nTwak: ${twakType}\n\nStudent Notes: ${studentNotes}`;
+      await assessmentService.addObservation(preSelectedAssessmentId, { notes: obsText });
+
+      // Trigger backend Prakriti calculation
+      await assessmentService.calculatePrakriti(preSelectedAssessmentId);
+
+      // Transition to Submitted
+      await assessmentService.updateStatus(preSelectedAssessmentId, 'submitted');
+
+      navigate(`/student/assessments/${preSelectedAssessmentId}/interpretation`);
+    } catch (err) {
+      console.error("Failed to submit assessment:", err);
+      alert("Failed to submit assessment. Please try again.");
+    }
   };
 
   if (loading) {

@@ -37,8 +37,8 @@ const AssignedAssessments = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+    const fetchData = async (isBackground = false) => {
+      if (!isBackground) setLoading(true);
       try {
         // Fetch assessments assigned to this student
         const assigned = await assessmentService.getMyAssigned();
@@ -61,10 +61,14 @@ const AssignedAssessments = () => {
       } catch (err) {
         console.warn('Failed to fetch assigned assessments:', err);
       } finally {
-        setLoading(false);
+        if (!isBackground) setLoading(false);
       }
     };
     fetchData();
+
+    // Real-time polling
+    const intervalId = setInterval(() => fetchData(true), 3000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const filtered = items.filter(({ patient }) => {
@@ -180,9 +184,9 @@ const AssignedAssessments = () => {
                     View Patient
                   </button>
                 )}
-                {assessment.status === 'finalized' ? (
+                {assessment.status === 'finalized' || assessment.status === 'reviewed' ? (
                   <button
-                    onClick={() => navigate(`/student/assessments/${assessment.id}/result`)}
+                    onClick={() => navigate(`/student/assessments/${assessment.id}/comparison`)}
                     className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-emerald-50 text-xs font-medium transition-colors shadow-sm flex items-center space-x-1.5"
                   >
                     <ChevronRight size={14} />

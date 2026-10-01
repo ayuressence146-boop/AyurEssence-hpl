@@ -15,7 +15,8 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = async (isBackground = false) => {
+      if (!isBackground) setLoading(true);
       try {
         const assigned = await assessmentService.getMyAssigned();
 
@@ -37,10 +38,13 @@ const StudentDashboard = () => {
       } catch (err) {
         console.warn('Failed to fetch assigned assessments:', err);
       } finally {
-        setLoading(false);
+        if (!isBackground) setLoading(false);
       }
     };
     fetchData();
+
+    const intervalId = setInterval(() => fetchData(true), 5000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const completedCount = assignedItems.filter(i => ['submitted', 'reviewed', 'finalized'].includes(i.assessment.status)).length;

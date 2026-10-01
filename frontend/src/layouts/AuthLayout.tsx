@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Sparkles } from 'lucide-react';
+import { authService } from '../services/api';
 
 const sdmImages = [
   {
@@ -28,6 +29,14 @@ const sdmImages = [
 
 const AuthLayout = () => {
   const [activeIdx, setActiveIdx] = useState(0);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const user = authService.getStoredUser();
+    if (user) {
+      navigate(`/${user.role}`);
+    }
+  }, [navigate]);
 
   useEffect(() => {
     const timer = setInterval(() => {

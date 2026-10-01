@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     # Security & Auth
     JWT_SECRET: str = "super-secret-jwt-key-change-me-in-production"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 21600
 
     model_config = SettingsConfigDict(
         env_file=".env",

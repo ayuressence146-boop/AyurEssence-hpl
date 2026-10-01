@@ -64,6 +64,14 @@ const DashboardLayout = ({ role }: { role: string }) => {
   const navigation = getNavigation(role);
   const currentUser = authService.getStoredUser();
 
+  React.useEffect(() => {
+    if (!currentUser) {
+      navigate('/auth/login');
+    } else if (currentUser.role !== role) {
+      navigate(`/${currentUser.role}`);
+    }
+  }, [currentUser, navigate, role]);
+
   const handleLogout = () => {
     authService.logout();
     navigate('/auth/login');

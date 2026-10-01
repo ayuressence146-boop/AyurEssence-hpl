@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare, Star, Award, CheckCircle, AlertCircle, ArrowRight, UserCheck, Calendar, Loader2 } from 'lucide-react';
-import { patientService, authService } from '../../services/api';
+import { patientService, authService, assessmentService } from '../../services/api';
 
 interface FeedbackItem {
   id: string;
@@ -23,32 +23,35 @@ const MentorFeedback = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchFeedback = async () => {
-      setLoading(true);
+    const fetchFeedback = async (isBackground = false) => {
+      if (!isBackground) setLoading(true);
       try {
-        const patients = await patientService.listPatients();
+        const assigned = await assessmentService.getMyAssigned();
         const items: FeedbackItem[] = [];
 
-        // Check if any patients have observations/mentor feedback recorded
-        for (const p of patients) {
-          const assessments = await patientService.getPatientAssessments(p.id);
-          for (const asm of assessments) {
-            if (asm.clinical_observations || (asm as any).mentor_feedback) {
-              const obs = (asm.clinical_observations as any) || {};
-              items.push({
-                id: asm.id,
-                patientName: p.full_name || p.name || 'Patient',
-                patientId: p.patientId || p.id.substring(0, 8),
-                mentor: obs.reviewed_by || 'Senior Clinical Vaidya',
-                mentorTitle: 'Senior Clinical Faculty',
-                date: asm.completed_at ? new Date(asm.completed_at).toISOString().split('T')[0] : 'Recent',
-                score: obs.accuracy_score ? `${obs.accuracy_score}%` : 'Evaluated',
-                type: (obs.accuracy_score || 100) >= 90 ? 'praise' : 'correction',
-                title: obs.evaluation_title || 'Clinical Diagnostic Review',
-                feedback: obs.notes || (asm as any).mentor_feedback || 'Assessment evaluated by faculty mentor.',
-                actionableAdvice: obs.guidance || 'Review classical Ayurvedic literature for further correlation.'
-              });
-            }
+        for (const asm of assigned) {
+          if (asm.status === 'reviewed' || asm.status === 'finalized') {
+            const p = await patientService.getPatient(asm.patient_id);
+            
+            // Extract the doctor's notes (we format it as 'Mentor Verification: ... Mentor Feedback: ...')
+            const rawNotes = asm.practitionerNotes || '';
+            const feedbackMatch = rawNotes.match(/Mentor Feedback:\s*([\s\S]*)/);
+            const feedbackText = feedbackMatch ? feedbackMatch[1].trim() : 'Assessment evaluated by faculty mentor.';
+            const isPraise = !feedbackText.toLowerCase().includes('incorrect') && !feedbackText.toLowerCase().includes('review');
+
+            items.push({
+              id: asm.id,
+              patientName: p.full_name || p.name || 'Patient',
+              patientId: p.patientId || p.id.substring(0, 8),
+              mentor: 'Senior Clinical Vaidya',
+              mentorTitle: 'Senior Clinical Faculty',
+              date: asm.finalized_at ? new Date(asm.finalized_at).toISOString().split('T')[0] : new Date(asm.created_at).toISOString().split('T')[0],
+              score: 'Evaluated',
+              type: isPraise ? 'praise' : 'correction',
+              title: 'Clinical Diagnostic Review',
+              feedback: feedbackText,
+              actionableAdvice: 'Review classical Ayurvedic literature for further correlation.'
+            });
           }
         }
         setFeedbackList(items);
@@ -56,11 +59,13 @@ const MentorFeedback = () => {
         console.warn('Failed to load mentor feedback:', err);
         setFeedbackList([]);
       } finally {
-        setLoading(false);
+        if (!isBackground) setLoading(false);
       }
     };
-
     fetchFeedback();
+
+    const intervalId = setInterval(() => fetchFeedback(true), 5000);
+    return () => clearInterval(intervalId);
   }, []);
 
   if (loading) {
@@ -105,7 +110,7 @@ const MentorFeedback = () => {
           </div>
           <div className="pt-2">
             <button
-              onClick={() => navigate('/student/assessments/new')}
+              onClick={() => navigate('/student/assessments/conduct')}
               className="px-5 py-2.5 bg-amber-800 hover:bg-amber-900 text-amber-50 rounded-xl font-medium text-sm transition-all shadow-md inline-flex items-center space-x-2"
             >
               <span>Conduct New Patient Assessment</span>

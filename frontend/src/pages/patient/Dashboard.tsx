@@ -11,8 +11,9 @@ const PatientDashboard = () => {
   const [patientName, setPatientName] = useState(currentUser?.full_name || 'Patient');
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = async (isBackground = false) => {
       if (!currentUser) return;
+      if (!isBackground) setLoading(true);
       try {
         // Fetch patient's own assessments from backend
         const assessments = await patientService.getPatientAssessments(currentUser.id);
@@ -22,10 +23,13 @@ const PatientDashboard = () => {
       } catch (err) {
         console.warn('Failed to fetch patient data:', err);
       } finally {
-        setLoading(false);
+        if (!isBackground) setLoading(false);
       }
     };
     fetchData();
+
+    const intervalId = setInterval(() => fetchData(true), 5000);
+    return () => clearInterval(intervalId);
   }, []);
 
   // Extract real result scores from the assessment's results array

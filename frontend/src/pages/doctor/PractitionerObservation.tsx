@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Activity, HeartPulse, Sparkles, CheckCircle2 } from 'lucide-react';
-import { dataStore, type AssessmentRecord } from '../../services/dataStore';
+import { assessmentService, type AssessmentModel } from '../../services/api';
 
 const PractitionerObservation = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [assessment, setAssessment] = useState<AssessmentRecord | null>(null);
+  const [assessment, setAssessment] = useState<AssessmentModel | null>(null);
 
   const [nadiGati, setNadiGati] = useState<'Sarpa (Snake)' | 'Hamsa (Swan)' | 'Manduka (Frog)'>('Sarpa (Snake)');
   const [nadiRate, setNadiRate] = useState(76);
@@ -14,39 +14,38 @@ const PractitionerObservation = () => {
   const [twak, setTwak] = useState<'Warm & Moist' | 'Cool & Dry' | 'Oily & Soft'>('Cool & Dry');
   const [netra, setNetra] = useState<'Clear & Bright' | 'Reddish & Sensitive' | 'Large & Moist'>('Clear & Bright');
   const [agni, setAgni] = useState<'Mandagni' | 'Tikshnagni' | 'Vishamagni' | 'Samagni'>('Vishamagni');
+  const [mentorNotes, setMentorNotes] = useState('');
 
   useEffect(() => {
-    const existing = dataStore.getAssessmentById(id || '');
-    if (existing) {
-      setAssessment(existing);
-      if (existing.observation) {
-        setNadiGati(existing.observation.nadiGati);
-        setNadiRate(existing.observation.nadiRate);
-        setJihva(existing.observation.jihva);
-        setTwak(existing.observation.twak);
-        setNetra(existing.observation.netra);
-        setAgni(existing.observation.agni);
+    const fetchAsm = async () => {
+      try {
+        if (id) {
+          const existing = await assessmentService.getAssessment(id);
+          setAssessment(existing);
+        }
+      } catch (err) {
+        console.error(err);
       }
-    }
+    };
+    fetchAsm();
   }, [id]);
 
-  const handleSave = () => {
-    const updated = dataStore.saveAssessment({
-      id: assessment?.id || id,
-      patientId: assessment?.patientId || 'P-001',
-      patientName: assessment?.patientName || 'Patient',
-      status: 'Reviewed',
-      observation: {
-        nadiGati,
-        nadiRate,
-        jihva,
-        twak,
-        netra,
-        agni
+  const handleSave = async () => {
+    if (!id) return;
+    try {
+      const obsText = `Mentor Verification:\nNadi: ${nadiGati} (${nadiRate} bpm)\nJihva: ${jihva}\nTwak: ${twak}\nNetra: ${netra}\nAgni: ${agni}\n\nMentor Feedback: ${mentorNotes}`;
+      
+      await assessmentService.addObservation(id, { notes: obsText });
+      
+      if (assessment?.status !== 'reviewed' && assessment?.status !== 'finalized') {
+        await assessmentService.updateStatus(id, 'reviewed');
       }
-    });
 
-    navigate(`/doctor/assessments/${updated.id}/result`);
+      navigate(`/doctor/assessments/${id}/result`);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save mentor feedback');
+    }
   };
 
   return (
@@ -196,14 +195,31 @@ const PractitionerObservation = () => {
 
       </div>
 
+      {/* Mentor Notes Text Area */}
+      <div className="bg-[#fcfaf4]/90 backdrop-blur-md p-6 rounded-[24px] border border-[#2b2721]/15 shadow-sm space-y-4">
+        <h3 className="text-lg font-serif font-bold text-[#2b2721]">Mentor Clinical Feedback</h3>
+        <textarea
+          className="w-full h-24 p-3 bg-white border border-[#2b2721]/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-700/40 text-sm"
+          placeholder="Provide constructive feedback for the student on their rationale..."
+          value={mentorNotes}
+          onChange={(e) => setMentorNotes(e.target.value)}
+        />
+      </div>
+
       {/* Action Footer */}
-      <div className="flex items-center justify-end space-x-3 pt-4">
+      <div className="flex items-center justify-between pt-4">
+        <button
+          onClick={() => navigate(`/doctor/assessments/${id}/questionnaire`)}
+          className="px-5 py-2.5 bg-white border border-[#2b2721]/20 text-[#2b2721] rounded-full text-xs font-bold hover:bg-[#fcfaf4] transition-all"
+        >
+          Back
+        </button>
         <button
           onClick={handleSave}
           className="px-6 py-3.5 bg-[#2b2721] hover:bg-[#1a1714] text-[#ece7dc] text-xs font-bold rounded-full transition-all shadow-md flex items-center space-x-2"
         >
-          <span>Calculate Final Prakriti & View Results</span>
-          <ArrowRight size={15} />
+          <CheckCircle2 size={16} />
+          <span>Verify & Generate Result</span>
         </button>
       </div>
 

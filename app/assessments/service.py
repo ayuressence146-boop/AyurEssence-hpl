@@ -123,6 +123,10 @@ class AssessmentService:
         if not assessment:
             raise NotFoundException(f"Assessment with ID '{assessment_id}' not found")
 
+        # Bypass patient access check if the user is explicitly assigned to this assessment
+        if current_user.role == "student" and str(assessment.assigned_to) == str(current_user.id):
+            return assessment
+
         # Verify access via patient ownership
         AssessmentService._verify_patient_access(db, str(assessment.patient_id), current_user)
         return assessment

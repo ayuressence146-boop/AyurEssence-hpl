@@ -148,6 +148,13 @@ const PrakritiResult = () => {
           <span>View My Ayurvedic Recommendations</span>
           <ArrowRight size={15} />
         </Link>
+        <button
+          onClick={() => window.print()}
+          className="px-6 py-3.5 bg-white border border-[#2b2721]/20 text-[#2b2721] hover:bg-[#fcfaf4] text-xs font-bold rounded-full transition-all shadow-sm inline-flex items-center space-x-2"
+        >
+          <FileText size={15} />
+          <span>Download PDF</span>
+        </button>
       </div>
 
     </div>

@@ -1,29 +1,28 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Award, ArrowRight, BookOpen, CheckCircle, BarChart2 } from 'lucide-react';
-import { getAssessmentById, getPatients, type Assessment, type Patient } from '../../services/dataStore';
+import { assessmentService, patientService, type AssessmentModel, type PatientModel } from '../../services/api';
 
 const StudentInterpretation = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [assessment, setAssessment] = useState<Assessment | null>(null);
-  const [patient, setPatient] = useState<Patient | null>(null);
+  const [assessment, setAssessment] = useState<AssessmentModel | null>(null);
+  const [patient, setPatient] = useState<PatientModel | null>(null);
 
   useEffect(() => {
-    if (id) {
-      const asm = getAssessmentById(id);
-      if (asm) {
-        setAssessment(asm);
-        const patients = getPatients();
-        const p = patients.find(item => item.id === asm.patientId);
-        setPatient(p || patients[0]);
-      } else {
-        const patients = getPatients();
-        const asmList = getAssessmentById('asm-101');
-        setAssessment(asmList || null);
-        setPatient(patients[0] || null);
+    const fetchData = async () => {
+      if (id) {
+        try {
+          const asm = await assessmentService.getAssessment(id);
+          setAssessment(asm);
+          const p = await patientService.getPatient(asm.patient_id);
+          setPatient(p);
+        } catch (err) {
+          console.warn('Failed to load interpretation data:', err);
+        }
       }
-    }
+    };
+    fetchData();
   }, [id]);
 
   if (!assessment || !patient) {
@@ -53,7 +52,7 @@ const StudentInterpretation = () => {
             <span className="text-xs text-amber-800/60 font-mono">ID: {assessment.id}</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-serif font-bold text-amber-950 mt-1">
-            Prakriti Diagnosis Breakdown for {patient.name}
+            Prakriti Diagnosis Breakdown for {patient.full_name || patient.name}
           </h1>
           <p className="text-amber-900/70 text-sm mt-0.5">
             Evaluated by Student Scholar • Submitted for Vaidya Review
@@ -125,8 +124,8 @@ const StudentInterpretation = () => {
               <span>Student Clinical Rationale</span>
             </h3>
 
-            <div className="bg-white/60 p-4 rounded-xl border border-amber-900/10 text-sm text-amber-950 leading-relaxed">
-              {'Patient demonstrated classic Vata-Pitta symptoms including irregular digestion, dry skin, and heightened heat sensitivity in afternoon.'}
+            <div className="bg-white/60 p-4 rounded-xl border border-amber-900/10 text-sm text-amber-950 leading-relaxed whitespace-pre-wrap">
+              {assessment.practitionerNotes || 'Patient demonstrated classic Vata-Pitta symptoms including irregular digestion, dry skin, and heightened heat sensitivity in afternoon.'}
             </div>
 
             <h4 className="text-sm font-bold text-amber-950 mt-4">Formulated Ahara & Vihara Plan</h4>

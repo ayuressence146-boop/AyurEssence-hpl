@@ -1,22 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Award, Activity, HeartPulse, FileText, CheckCircle2, Sparkles } from 'lucide-react';
-import { dataStore, type AssessmentRecord } from '../../services/dataStore';
+import { ArrowLeft, ArrowRight, Award, Activity, HeartPulse, FileText, CheckCircle2, Sparkles, Loader2 } from 'lucide-react';
+import { assessmentService, patientService, type AssessmentModel, type PatientModel } from '../../services/api';
 
 const DoctorAssessmentResult = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [assessment, setAssessment] = useState<AssessmentRecord | null>(null);
+  const [assessment, setAssessment] = useState<AssessmentModel | null>(null);
+  const [patient, setPatient] = useState<PatientModel | null>(null);
 
   useEffect(() => {
-    const record = dataStore.getAssessmentById(id || '');
-    if (record) {
-      setAssessment(record);
-    }
+    const fetchData = async () => {
+      if (id) {
+        try {
+          const record = await assessmentService.getAssessment(id);
+          setAssessment(record);
+          const pat = await patientService.getPatient(record.patient_id);
+          setPatient(pat);
+        } catch (err) {
+          console.warn('Failed to load assessment result:', err);
+        }
+      }
+    };
+    fetchData();
   }, [id]);
 
   const scores = assessment?.calculatedScores || { vata: 48, pitta: 35, kapha: 17, dominant: 'Vata-Pitta' };
-  const obs = assessment?.observation;
+  
+  // Try to parse the observations from practitionerNotes if possible
+  const obsNotes = assessment?.practitionerNotes || '';
+  const isReviewed = assessment?.status === 'reviewed' || assessment?.status === 'finalized';
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 text-[#2b2721]">
@@ -51,7 +64,7 @@ const DoctorAssessmentResult = () => {
           
           <h1 className="text-3xl font-serif font-bold text-[#2b2721]">{scores.dominant} Prakriti</h1>
           <p className="text-xs text-[#2b2721]/75 font-medium">
-            Patient: <span className="font-bold">{assessment?.patientName || 'Patient'}</span> · Evaluation Date: {assessment?.date || 'Recent'}
+            Patient: <span className="font-bold">{patient?.full_name || patient?.name || 'Patient'}</span> · Evaluation Date: {assessment?.created_at ? new Date(assessment.created_at).toLocaleDateString() : 'Recent'}
           </p>
         </div>
 
@@ -78,38 +91,17 @@ const DoctorAssessmentResult = () => {
       </div>
 
       {/* Observation Summary Card */}
-      {obs && (
+      {isReviewed && (
         <div className="bg-[#fcfaf4]/90 backdrop-blur-md p-6 rounded-[24px] border border-[#2b2721]/15 shadow-sm space-y-3">
           <h3 className="text-base font-serif font-bold text-[#2b2721] flex items-center space-x-2">
             <Activity size={16} className="text-emerald-700" />
             <span>Ashtavidha Diagnostic Findings</span>
           </h3>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-            <div className="p-3 bg-white/80 rounded-xl border border-[#2b2721]/10">
-              <span className="text-[10px] uppercase font-bold text-[#2b2721]/50 block">Nadi Gati</span>
-              <p className="font-bold text-[#2b2721]">{obs.nadiGati} ({obs.nadiRate} bpm)</p>
-            </div>
-
-            <div className="p-3 bg-white/80 rounded-xl border border-[#2b2721]/10">
-              <span className="text-[10px] uppercase font-bold text-[#2b2721]/50 block">Jihva (Tongue)</span>
-              <p className="font-bold text-[#2b2721]">{obs.jihva}</p>
-            </div>
-
-            <div className="p-3 bg-white/80 rounded-xl border border-[#2b2721]/10">
-              <span className="text-[10px] uppercase font-bold text-[#2b2721]/50 block">Twak (Skin)</span>
-              <p className="font-bold text-[#2b2721]">{obs.twak}</p>
-            </div>
-
-            <div className="p-3 bg-white/80 rounded-xl border border-[#2b2721]/10">
-              <span className="text-[10px] uppercase font-bold text-[#2b2721]/50 block">Netra (Eyes)</span>
-              <p className="font-bold text-[#2b2721]">{obs.netra}</p>
-            </div>
-
-            <div className="p-3 bg-white/80 rounded-xl border border-[#2b2721]/10">
-              <span className="text-[10px] uppercase font-bold text-[#2b2721]/50 block">Agni (Digestion)</span>
-              <p className="font-bold text-[#2b2721]">{obs.agni}</p>
-            </div>
+          <div className="p-4 bg-white/80 rounded-xl border border-[#2b2721]/10 text-xs">
+            <p className="font-medium text-[#2b2721]/80 whitespace-pre-wrap">
+              {obsNotes || 'Observations verified and saved by the practitioner.'}
+            </p>
           </div>
         </div>
       )}
@@ -118,10 +110,27 @@ const DoctorAssessmentResult = () => {
       <div className="flex items-center justify-between pt-4">
         <button
           onClick={() => navigate(`/doctor/assessments/${id}/recommendation`)}
-          className="px-6 py-3.5 bg-[#2b2721] hover:bg-[#1a1714] text-[#ece7dc] text-xs font-bold rounded-full transition-all shadow-md flex items-center space-x-2"
+          className="px-6 py-3.5 bg-white border border-[#2b2721]/20 hover:bg-[#fcfaf4] text-[#2b2721] text-xs font-bold rounded-full transition-all shadow-sm flex items-center space-x-2"
         >
           <span>Customize Ahara & Vihara Guidance</span>
           <ArrowRight size={15} />
+        </button>
+
+        <button
+          onClick={async () => {
+            try {
+              if (id) {
+                await assessmentService.updateStatus(id, 'finalized');
+                navigate(`/doctor`);
+              }
+            } catch (err) {
+              console.error(err);
+            }
+          }}
+          className="px-6 py-3.5 bg-[#2b2721] hover:bg-[#1a1714] text-[#ece7dc] text-xs font-bold rounded-full transition-all shadow-md flex items-center space-x-2"
+        >
+          <CheckCircle2 size={16} />
+          <span>Finalize Result & Generate Certificate</span>
         </button>
       </div>
 

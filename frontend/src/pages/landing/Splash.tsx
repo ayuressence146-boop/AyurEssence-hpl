@@ -1,12 +1,21 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { authService } from '../../services/api';
 
 const Splash = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect to landing after a 2.5-second splash animation
+    const user = authService.getStoredUser();
+    
+    // If logged in, instantly redirect to the dashboard
+    if (user) {
+      navigate(`/${user.role}`, { replace: true });
+      return;
+    }
+
+    // Otherwise, show splash for 2.5s then go to landing
     const timer = setTimeout(() => {
       navigate('/landing');
     }, 2500);

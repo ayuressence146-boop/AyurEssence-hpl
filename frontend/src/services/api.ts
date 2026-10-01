@@ -115,6 +115,7 @@ export interface AssessmentModel {
   };
   recommendations?: any;
   practitionerNotes?: string;
+  observations?: { notes: string; created_by: string; created_at: string }[];
 }
 
 export interface AssessmentResultModel {
@@ -346,7 +347,12 @@ export const assessmentService = {
   async getMyAssigned(): Promise<AssessmentModel[]> {
     try {
       const response = await apiClient.get<AssessmentModel[]>('/assessments/my-assigned');
-      return response.data;
+      return response.data.map(data => {
+        if (data.observations && data.observations.length > 0) {
+           data.practitionerNotes = data.observations.map((o: any) => o.notes).join('\n\n---\n\n');
+        }
+        return data;
+      });
     } catch (err) {
       console.warn('Failed to fetch assigned assessments:', err);
       return [];
@@ -355,8 +361,36 @@ export const assessmentService = {
 
   async getAssessment(id: string): Promise<AssessmentModel> {
     try {
-      const response = await apiClient.get<AssessmentModel>(`/assessments/${id}`);
-      return response.data;
+      const response = await apiClient.get<any>(`/assessments/${id}`);
+      const data = response.data;
+      
+      // Map results to calculatedScores if they exist
+      if (data.results && data.results.length > 0) {
+        const latestResult = data.results[data.results.length - 1];
+        data.calculatedScores = {
+          vata: latestResult.vata_percentage,
+          pitta: latestResult.pitta_percentage,
+          kapha: latestResult.kapha_percentage,
+          dominant: latestResult.dominant_dosha
+        };
+      }
+      
+      // Try to fetch recommendations for this assessment
+      try {
+        const rec = await apiClient.get<RecommendationModel>(`/recommendations/assessment/${id}`);
+        if (rec.data) {
+           data.recommendations = { lifestyle: [rec.data.draft_text, rec.data.approved_text].filter(Boolean) };
+        }
+      } catch (e) {
+         // ignore if not found
+      }
+
+      // Map observations to practitionerNotes (student rationale or mentor feedback)
+      if (data.observations && data.observations.length > 0) {
+         data.practitionerNotes = data.observations.map((o: any) => o.notes).join('\n\n---\n\n');
+      }
+
+      return data as AssessmentModel;
     } catch (err) {
       console.warn('Backend get assessment failed:', err);
       throw err;
