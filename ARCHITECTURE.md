@@ -122,56 +122,160 @@ Here is a conceptual view of how the database tables are linked together:
 
 ```mermaid
 erDiagram
-    PROFILES {
-        uuid id PK
-        string email
-        string hashed_password
-        string role "doctor, student, patient"
-    }
-    
-    PATIENTS {
+    profiles {
         uuid id PK
         string full_name
-        int age
-        string gender
-        uuid created_by FK "Links to PROFILES"
+        string role
+        string email
     }
-
-    ASSESSMENTS {
+    
+    patients {
         uuid id PK
-        uuid patient_id FK "Links to PATIENTS"
-        uuid assigned_to FK "Links to PROFILES (Doctor)"
-        string status "draft, submitted, finalized"
-        json final_scores "Vata, Pitta, Kapha %"
+        uuid created_by FK
+        string full_name
+        uuid primary_methodology_id FK
     }
 
-    QUESTIONNAIRES {
+    methodologies {
         uuid id PK
-        string category "vata, pitta, kapha"
-        string text
+        string name
+        string version
     }
 
-    RESPONSES {
+    methodology_references {
+        uuid id PK
+        uuid methodology_id FK
+    }
+
+    questionnaires {
+        uuid id PK
+        string name
+        uuid methodology_id FK
+        uuid created_by FK
+    }
+
+    questions {
+        uuid id PK
+        uuid questionnaire_id FK
+        string question_text
+    }
+
+    question_options {
+        uuid id PK
+        uuid question_id FK
+        string option_text
+        numeric vata_score
+        numeric pitta_score
+        numeric kapha_score
+    }
+
+    assessments {
+        uuid id PK
+        uuid patient_id FK
+        uuid conducted_by FK
+        uuid questionnaire_id FK
+        uuid assigned_to FK
+        string status
+    }
+
+    responses {
         uuid id PK
         uuid assessment_id FK
         uuid question_id FK
-        int score "1 to 5"
+        uuid selected_option_id FK
     }
 
-    OBSERVATIONS {
+    observations {
         uuid id PK
         uuid assessment_id FK
-        string nadi_vata
-        string nadi_pitta
-        string nadi_kapha
+        uuid created_by FK
+        string notes
     }
 
-    PROFILES ||--o{ PATIENTS : "creates/manages"
-    PATIENTS ||--o{ ASSESSMENTS : "takes"
-    PROFILES ||--o{ ASSESSMENTS : "evaluates"
-    ASSESSMENTS ||--o{ RESPONSES : "contains"
-    QUESTIONNAIRES ||--o{ RESPONSES : "linked_to"
-    ASSESSMENTS ||--o| OBSERVATIONS : "has"
+    assessment_results {
+        uuid id PK
+        uuid assessment_id FK
+        numeric vata_percentage
+        numeric pitta_percentage
+        numeric kapha_percentage
+        string dominant_dosha
+    }
+
+    reports {
+        uuid id PK
+        uuid assessment_id FK
+        string report_type
+        uuid generated_by FK
+    }
+
+    recommendations {
+        uuid id PK
+        uuid assessment_id FK
+        uuid patient_id FK
+        uuid approved_by FK
+        string status
+    }
+
+    followup_reminders {
+        uuid id PK
+        uuid assessment_id FK
+        uuid patient_id FK
+        uuid created_by FK
+        string status
+    }
+
+    report_share_tokens {
+        uuid id PK
+        uuid report_id FK
+        uuid created_by FK
+        string token
+    }
+
+    mentor_feedback {
+        uuid id PK
+        uuid assessment_id FK
+        uuid student_id FK
+        uuid doctor_id FK
+    }
+
+    %% Relationships
+    profiles ||--o{ patients : "creates"
+    methodologies ||--o{ patients : "has primary"
+    methodologies ||--o{ methodology_references : "has"
+    methodologies ||--o{ questionnaires : "defines"
+    profiles ||--o{ questionnaires : "creates"
+    questionnaires ||--o{ questions : "contains"
+    questions ||--o{ question_options : "has"
+    
+    patients ||--o{ assessments : "takes"
+    profiles ||--o{ assessments : "conducts/assigned_to"
+    questionnaires ||--o{ assessments : "uses"
+    
+    assessments ||--o{ responses : "has"
+    questions ||--o{ responses : "answered_in"
+    question_options ||--o{ responses : "selected_in"
+    
+    assessments ||--o| observations : "has"
+    profiles ||--o{ observations : "records"
+    
+    assessments ||--o| assessment_results : "produces"
+    
+    assessments ||--o| reports : "generates"
+    profiles ||--o{ reports : "generates"
+    
+    assessments ||--o| recommendations : "receives"
+    patients ||--o{ recommendations : "receives"
+    profiles ||--o{ recommendations : "approves"
+    
+    assessments ||--o{ followup_reminders : "has"
+    patients ||--o{ followup_reminders : "has"
+    profiles ||--o{ followup_reminders : "creates"
+    
+    reports ||--o{ report_share_tokens : "has"
+    profiles ||--o{ report_share_tokens : "creates"
+    
+    assessments ||--o{ mentor_feedback : "receives"
+    profiles ||--o{ mentor_feedback : "gives/receives"
 ```
 
 ### Explanation of the Architecture:
