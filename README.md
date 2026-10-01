@@ -219,7 +219,7 @@ To demonstrate the full assessment slice:
 - Automated Test Suite & Swagger documentation
 
 ### Deferred (Future Evaluation Scope):
-- React / Flutter Frontend UI
+- Flutter Frontend UI
 - PDF Report generation
 - Historical trend analytics
 - NLP assistive diagnostic suggestions
